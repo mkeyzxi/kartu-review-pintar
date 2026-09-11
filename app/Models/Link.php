@@ -12,6 +12,7 @@ class Link extends Model
     protected $fillable = [
         'slug',
         'store_name',
+        'phone_number',
         'url_gmb',
         'is_claimed',
         'pin',

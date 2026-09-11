@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="w-full max-w-md animate-fade-up" style="animation-delay: 0.1s;">
+<div class="w-full max-w-lg md:max-w-2xl animate-fade-up" style="animation-delay: 0.1s;">
 
     {{-- Card utama --}}
     <div class="card-solid p-8">
@@ -71,6 +71,58 @@
         {{-- Form Aktivasi --}}
         <form id="form-aktivasi" action="{{ route('link.activate', $link->slug) }}" method="POST" novalidate class="space-y-6">
             @csrf
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {{-- Input Nama Toko --}}
+                <div>
+                    <label for="store_name" class="block text-sm font-bold-display text-google-text mb-2">
+                        NAMA TOKO / BISNIS <span class="text-gray-400 font-sans font-normal text-xs normal-case">(Opsional)</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="store_name"
+                        name="store_name"
+                        placeholder="Contoh: Kopi Kenangan"
+                        value="{{ old('store_name') }}"
+                        class="input-field {{ $errors->has('store_name') ? 'error' : '' }}"
+                        autocomplete="organization"
+                    >
+                    @error('store_name')
+                        <p class="mt-2 text-xs text-google-red font-bold flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                            {{ $message }}
+                        </p>
+                    @enderror
+                </div>
+
+                {{-- Input Nomor Telepon --}}
+                <div>
+                    <label for="phone_number" class="block text-sm font-bold-display text-google-text mb-2">
+                        NOMOR TELEPON (WA)
+                    </label>
+                    <input
+                        type="tel"
+                        id="phone_number"
+                        name="phone_number"
+                        placeholder="Contoh: 081234567890"
+                        value="{{ old('phone_number') }}"
+                        class="input-field {{ $errors->has('phone_number') ? 'error' : '' }}"
+                        autocomplete="tel"
+                        required
+                    >
+                    <p class="mt-2 text-xs text-gray-500 font-medium">Berguna jika kami perlu menghubungi Anda.</p>
+                    @error('phone_number')
+                        <p class="mt-2 text-xs text-google-red font-bold flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                            {{ $message }}
+                        </p>
+                    @enderror
+                </div>
+            </div>
 
             {{-- Input URL Google Maps --}}
             <div>

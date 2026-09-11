@@ -77,19 +77,24 @@ class LinkEngineController extends Controller
                 'max:2048',
                 'regex:/^https?:\/\/(?:[a-zA-Z0-9-]+\.)*(?:google\.com|goo\.gl|vercel\.app|netlify\.app|makbuln\.web\.id)(?:\/|$)/i'
             ],
+            'store_name' => ['nullable', 'string', 'max:255'],
+            'phone_number' => ['required', 'string', 'max:20'],
             'pin'     => ['required', 'digits_between:4,6'],
         ], [
             'url_gmb.required' => 'Link URL wajib diisi.',
             'url_gmb.url'      => 'Format URL tidak valid. Pastikan diawali https://',
             'url_gmb.regex'    => 'Link harus berupa URL dari Google Maps, Vercel, Netlify, atau makbuln.web.id.',
+            'phone_number.required' => 'Nomor Telepon wajib diisi.',
             'pin.required'     => 'PIN wajib diisi.',
             'pin.digits_between' => 'PIN harus berupa angka 4–6 digit.',
         ]);
 
         $link->update([
-            'url_gmb'    => $validated['url_gmb'],
-            'pin'        => Hash::make($validated['pin']),
-            'is_claimed' => true,
+            'url_gmb'      => $validated['url_gmb'],
+            'store_name'   => $validated['store_name'],
+            'phone_number' => $validated['phone_number'],
+            'pin'          => Hash::make($validated['pin']),
+            'is_claimed'   => true,
         ]);
 
         return view('success', compact('link'))
