@@ -4,19 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kartu Pintar | Kartu NFC & QR Review Google Maps</title>
-    <meta name="description" content="Kartu Pintar adalah kartu NFC & QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
-    <meta name="keywords" content="kartu review Google Maps, kartu NFC Google Maps, kartu QR Google Maps, kartu review NFC, kartu review QR, kartu Google Maps, NFC review card, QR review card, smart review card, kartu digital bisnis, kartu review pelanggan">
+    <title>Kartu Pintar | Kartu NFC dan QR Review Google Maps</title>
+    <meta name="description"
+        content="Kartu Pintar adalah kartu NFC dan QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
+    <meta name="keywords"
+        content="kartu review Google Maps, kartu NFC Google Maps, kartu QR Google Maps, kartu review NFC, kartu review QR, kartu Google Maps, NFC review card, QR review card, smart review card, kartu digital bisnis, kartu review pelanggan">
     <link rel="canonical" href="https://kartupintar.my.id">
 
     {{-- Favicon & OpenGraph Meta Tags --}}
     <link rel="icon" type="image/jpeg" href="{{ asset('logo-kartu-pintar.jpg') }}">
-    <meta property="og:title" content="Kartu Pintar | Kartu NFC & QR Review Google Maps">
-    <meta property="og:description" content="Kartu Pintar adalah kartu NFC & QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
+    <meta property="og:title" content="Kartu Pintar | Kartu NFC dan QR Review Google Maps">
+    <meta property="og:description"
+        content="Kartu Pintar adalah kartu NFC dan QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
     <meta property="og:image" content="{{ asset('logo-kartu-pintar.jpg') }}">
     <meta property="og:url" content="https://kartupintar.my.id">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Kartu Pintar">
+    <meta name="theme-color" content="#ffffff">
+
+    {{-- gsc --}}
+    <meta name="google-site-verification" content="6bfbdMy52_-68YPDgbbA1KAsmrU1xLurVIRL-OOI448" />
 
     {{-- Google Fonts: Archivo Black, JetBrains Mono, Inter --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -141,21 +148,26 @@
 <body class="min-h-screen bg-grid antialiased">
 
     {{-- Navbar --}}
-    <nav class="fixed top-0 w-full bg-white/90 backdrop-blur-sm border-b-4 border-google-text z-50">
+    <nav id="navbar" class="fixed top-0 w-full bg-white/90 backdrop-blur-sm border-b-4 border-google-text z-50 transform transition-transform duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex-shrink-0 flex items-center gap-3">
-                    <img src="{{ asset('logo-kartu-pintar.jpg') }}" alt="Logo Kartu Pintar"
+                    <img src="{{ asset('logo-kartu-pintar.jpg') }}" alt="Logo Kartu Pintar" width="40" height="40"
                         class="w-10 h-10 rounded-full border-2 border-google-text shadow-[2px_2px_0px_#111827]">
-                    <span class="font-bold-display text-xl mt-1">KARTU PINTAR</span>
+                    <span class="font-bold-display text-base md:text-xl mt-1">KARTU PINTAR</span>
                 </div>
-                <div class="flex items-center gap-4 md:gap-8">
+                <div class="flex items-center gap-2 md:gap-8">
                     <div class="hidden md:flex items-center gap-6">
-                        <a href="#fitur" class="font-bold-display text-gray-600 hover:text-google-blue transition-colors text-sm">FITUR</a>
-                        <a href="#cara-kerja" class="font-bold-display text-gray-600 hover:text-google-blue transition-colors text-sm">CARA KERJA</a>
-                        <a href="#harga" class="font-bold-display text-gray-600 hover:text-google-blue transition-colors text-sm">HARGA</a>
+                        <a href="#fitur" aria-label="Lihat Fitur Kartu Pintar"
+                            class="font-bold-display text-gray-700 hover:text-google-blue transition-colors text-sm">FITUR</a>
+                        <a href="#cara-kerja" aria-label="Lihat Cara Kerja Kartu Pintar"
+                            class="font-bold-display text-gray-700 hover:text-google-blue transition-colors text-sm">CARA
+                            KERJA</a>
+                        <a href="#harga" aria-label="Lihat Harga Kartu Pintar"
+                            class="font-bold-display text-gray-700 hover:text-google-blue transition-colors text-sm">HARGA</a>
                     </div>
-                    <a href="#harga" class="px-5 py-2 bg-google-blue text-white font-bold-display text-sm border-2 border-google-text rounded-lg shadow-[4px_4px_0px_#111827] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#111827] active:translate-y-0 active:shadow-[2px_2px_0px_#111827] transition-all">
+                    <a href="#harga" aria-label="Beli Kartu Sekarang"
+                        class="px-3 py-1.5 md:px-5 md:py-2 bg-google-blue text-white font-bold-display text-xs md:text-sm border-2 border-google-text rounded-lg shadow-[4px_4px_0px_#111827] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#111827] active:translate-y-0 active:shadow-[2px_2px_0px_#111827] transition-all">
                         BELI SEKARANG
                     </a>
                 </div>
@@ -176,25 +188,24 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                 d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
-                        NFC & QR READY
+                        NFC DAN QR READY
                     </span>
                 </div>
 
                 <h1 class="text-5xl sm:text-6xl lg:text-6xl font-bold-display text-google-text leading-[1.1] mb-6 animate-fade-up"
                     style="animation-delay: 0.1s;">
-                    CARA <span
+                    KARTU NFC DAN QR <span
                         class="bg-google-yellow px-2 border-4 border-google-text shadow-[4px_4px_0px_#111827] -rotate-2 inline-block">TERCEPAT</span><br>
-                    DAPATKAN ULASAN BINTANG 5
+                    UNTUK REVIEW GOOGLE MAPS
                 </h1>
 
-                <p class="text-lg md:text-xl text-gray-600 font-medium mb-10 max-w-lg animate-fade-up"
+                <h2 class="text-lg md:text-xl text-gray-700 font-medium mb-10 max-w-lg animate-fade-up"
                     style="animation-delay: 0.2s;">
-                    Berhenti meminta ulasan secara manual! Pelanggan cukup tap kartu atau scan kode, dan langsung
-                    diarahkan ke halaman Google Maps bisnis Anda.
-                </p>
+                    Berhenti meminta ulasan secara manual! Dengan <strong>Kartu Review Pintar</strong>, pelanggan cukup tap NFC atau scan QR code, langsung diarahkan ke halaman review Google Maps bisnis Anda untuk rating bintang 5.
+                </h2>
 
                 <div class="flex flex-wrap gap-4 animate-fade-up" style="animation-delay: 0.3s;">
-                    <a href="#fitur" class="btn-google-blue !text-lg !px-8 !py-4 group">
+                    <a href="#fitur" aria-label="Lihat Fitur Lengkap" class="btn-google-blue !text-lg !px-8 !py-4 group">
                         LIHAT FITUR
                         <svg class="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform" fill="none"
                             viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -202,7 +213,7 @@
                                 d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
                         </svg>
                     </a>
-                    <a href="#cara-kerja"
+                    <a href="#cara-kerja" aria-label="Pelajari Cara Kerja"
                         class="bg-white text-google-text font-bold-display text-lg px-8 py-4 rounded-xl border-4 border-google-text shadow-[4px_4px_0px_#111827] hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#111827] transition-all flex items-center justify-center">
                         CARA KERJA
                     </a>
@@ -272,7 +283,7 @@
                         </svg>
                     </div>
                     <h3 class="text-2xl font-bold-display mb-3">INSTANT REDIRECT</h3>
-                    <p class="font-medium text-gray-600">Scan kartu → langsung ke Google Maps. Zero friction untuk
+                    <p class="font-medium text-gray-700">Scan kartu → langsung ke Google Maps. Zero friction untuk
                         pelanggan Anda. Sangat cepat dan mudah.</p>
                 </div>
 
@@ -288,7 +299,7 @@
                         </svg>
                     </div>
                     <h3 class="text-2xl font-bold-display mb-3">PIN AMAN</h3>
-                    <p class="font-medium text-gray-600">Setiap kartu dilindungi oleh PIN terenkripsi. Hanya Anda yang
+                    <p class="font-medium text-gray-700">Setiap kartu dilindungi oleh PIN terenkripsi. Hanya Anda yang
                         bisa mengubah tautan tujuan Google Maps.</p>
                 </div>
 
@@ -304,7 +315,7 @@
                         </svg>
                     </div>
                     <h3 class="text-2xl font-bold-display mb-3">TANPA APLIKASI</h3>
-                    <p class="font-medium text-gray-600">Frictionless onboarding. Aktivasi langsung dari browser
+                    <p class="font-medium text-gray-700">Frictionless onboarding. Aktivasi langsung dari browser
                         smartphone, tidak perlu mengunduh aplikasi tambahan.</p>
                 </div>
 
@@ -347,27 +358,36 @@
     {{-- Target Audience --}}
     <section class="py-24 px-4 bg-google-yellow border-y-4 border-google-text">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-4xl md:text-5xl font-bold-display text-google-text mb-16 text-center">UNTUK BISNIS APA SAJA?</h2>
+            <h2 class="text-4xl md:text-5xl font-bold-display text-google-text mb-16 text-center">UNTUK BISNIS APA
+                SAJA?</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Card 1 -->
-                <div class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
+                <div
+                    class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
                     <h3 class="text-2xl font-bold-display mb-2 text-google-blue">RESTORAN & KAFE</h3>
-                    <p class="font-medium text-gray-700">Dapatkan ulasan selagi pelanggan menunggu tagihan atau menikmati kopi.</p>
+                    <p class="font-medium text-gray-700">Dapatkan ulasan selagi pelanggan menunggu tagihan atau
+                        menikmati kopi.</p>
                 </div>
                 <!-- Card 2 -->
-                <div class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
+                <div
+                    class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
                     <h3 class="text-2xl font-bold-display mb-2 text-google-red">KLINIK & SALON</h3>
-                    <p class="font-medium text-gray-700">Minta pasien menilai pelayanan langsung setelah selesai sesi pengobatan atau perawatan.</p>
+                    <p class="font-medium text-gray-700">Minta pasien menilai pelayanan langsung setelah selesai sesi
+                        pengobatan atau perawatan.</p>
                 </div>
                 <!-- Card 3 -->
-                <div class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
+                <div
+                    class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
                     <h3 class="text-2xl font-bold-display mb-2 text-google-green">TOKO RETAIL</h3>
-                    <p class="font-medium text-gray-700">Letakkan di meja kasir. Pelanggan tap saat membayar belanjaan mereka.</p>
+                    <p class="font-medium text-gray-700">Letakkan di meja kasir. Pelanggan tap saat membayar belanjaan
+                        mereka.</p>
                 </div>
                 <!-- Card 4 -->
-                <div class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
+                <div
+                    class="bg-white border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827] hover:-translate-y-2 transition-transform">
                     <h3 class="text-2xl font-bold-display mb-2 text-google-text">BENGKEL & JASA</h3>
-                    <p class="font-medium text-gray-700">Tingkatkan kepercayaan calon pelanggan baru dengan rating tinggi di Maps.</p>
+                    <p class="font-medium text-gray-700">Tingkatkan kepercayaan calon pelanggan baru dengan rating
+                        tinggi di Maps.</p>
                 </div>
             </div>
         </div>
@@ -377,11 +397,14 @@
     <section id="harga" class="py-24 px-4 bg-white">
         <div class="max-w-4xl mx-auto text-center">
             <h2 class="text-4xl md:text-5xl font-bold-display text-google-text mb-6">PILIH KARTU ANDA</h2>
-            <p class="text-lg text-gray-600 font-medium mb-12">Satu kali bayar. Tanpa biaya bulanan. Bisa dipakai selamanya.</p>
+            <p class="text-lg text-gray-700 font-medium mb-12">Satu kali bayar. Tanpa biaya bulanan. Bisa dipakai
+                selamanya.</p>
 
-            <div class="bg-white border-4 border-google-text p-8 md:p-12 rounded-3xl shadow-[12px_12px_0px_#111827] max-w-2xl mx-auto relative">
+            <div
+                class="bg-white border-4 border-google-text p-8 md:p-12 rounded-3xl shadow-[12px_12px_0px_#111827] max-w-2xl mx-auto relative">
                 <!-- Badge -->
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-google-red text-white font-bold-display px-6 py-2 border-4 border-google-text rounded-full shadow-[4px_4px_0px_#111827] rotate-2">
+                <div
+                    class="absolute -top-6 left-1/2 -translate-x-1/2 bg-google-red text-white font-bold-display px-6 py-2 border-4 border-google-text rounded-full shadow-[4px_4px_0px_#111827] rotate-2">
                     PROMO TERBATAS
                 </div>
 
@@ -393,36 +416,55 @@
 
                 <ul class="text-left space-y-4 font-bold text-gray-700 mb-10 max-w-sm mx-auto">
                     <li class="flex items-center gap-3">
-                        <div class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div
+                            class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
-                        1 Kartu NFC & QR Code
+                        1 Kartu NFC dan QR Code
                     </li>
                     <li class="flex items-center gap-3">
-                        <div class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div
+                            class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
                         Bebas ubah link Google Maps
                     </li>
                     <li class="flex items-center gap-3">
-                        <div class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div
+                            class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
                         Perlindungan PIN
                     </li>
                     <li class="flex items-center gap-3">
-                        <div class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        <div
+                            class="w-6 h-6 bg-google-green rounded-full border-2 border-google-text flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                         </div>
                         Tanpa biaya langganan
                     </li>
                 </ul>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="https://wa.me/6285342181132?text=Halo%20saya%20tertarik%20dengan%20Kartu%20Review%20Pintar" target="_blank" class="w-full btn-google-blue !text-lg !py-4 block text-center flex-1">
+                    <a href="https://wa.me/6285342181132?text=Halo%20saya%20tertarik%20dengan%20Kartu%20Review%20Pintar"
+                        target="_blank" rel="noopener noreferrer" aria-label="Pesan Kartu via WhatsApp Admin 1" class="w-full btn-google-blue !text-lg !py-4 block text-center flex-1">
                         PESAN VIA WA (1)
                     </a>
-                    <a href="https://wa.me/6281340152851?text=Halo%20saya%20tertarik%20dengan%20Kartu%20Review%20Pintar" target="_blank" class="w-full btn-google-blue !text-lg !py-4 block text-center flex-1 !bg-google-green">
+                    <a href="https://wa.me/6281340152851?text=Halo%20saya%20tertarik%20dengan%20Kartu%20Review%20Pintar"
+                        target="_blank" rel="noopener noreferrer" aria-label="Pesan Kartu via WhatsApp Admin 2"
+                        class="w-full btn-google-blue !text-lg !py-4 block text-center flex-1 !bg-google-green">
                         PESAN VIA WA (2)
                     </a>
                 </div>
@@ -434,24 +476,30 @@
     <section class="py-24 px-4 bg-google-blue border-y-4 border-google-text text-white">
         <div class="max-w-3xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold-display mb-12 text-center text-white">PERTANYAAN UMUM</h2>
-            
+
             <div class="space-y-6">
                 <!-- FAQ Item 1 -->
-                <div class="bg-white text-google-text border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827]">
+                <div
+                    class="bg-white text-google-text border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827]">
                     <h4 class="text-xl font-bold-display mb-2">Apakah hp pelanggan harus punya NFC?</h4>
-                    <p class="font-medium text-gray-700">Untuk fitur tap, ya. Jika hp pelanggan tidak mendukung NFC, mereka tetap bisa scan QR code yang tercetak di kartu menggunakan kamera hp.</p>
+                    <p class="font-medium text-gray-700">Untuk fitur tap, ya. Jika hp pelanggan tidak mendukung NFC,
+                        mereka tetap bisa scan QR code yang tercetak di kartu menggunakan kamera hp.</p>
                 </div>
 
                 <!-- FAQ Item 2 -->
-                <div class="bg-white text-google-text border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827]">
+                <div
+                    class="bg-white text-google-text border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827]">
                     <h4 class="text-xl font-bold-display mb-2">Apakah bisa dipakai untuk banyak cabang?</h4>
-                    <p class="font-medium text-gray-700">Satu kartu terhubung ke satu link Google Maps. Jika Anda memiliki beberapa cabang, gunakan satu kartu untuk masing-masing cabang.</p>
+                    <p class="font-medium text-gray-700">Satu kartu terhubung ke satu link Google Maps. Jika Anda
+                        memiliki beberapa cabang, gunakan satu kartu untuk masing-masing cabang.</p>
                 </div>
 
                 <!-- FAQ Item 3 -->
-                <div class="bg-white text-google-text border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827]">
+                <div
+                    class="bg-white text-google-text border-4 border-google-text p-6 rounded-2xl shadow-[8px_8px_0px_#111827]">
                     <h4 class="text-xl font-bold-display mb-2">Bagaimana cara ganti link jika saya pindah lokasi?</h4>
-                    <p class="font-medium text-gray-700">Anda cukup tap kartu, masukkan PIN rahasia Anda, lalu masukkan link Google Maps yang baru. Prosesnya hanya butuh 10 detik.</p>
+                    <p class="font-medium text-gray-700">Anda cukup tap kartu, masukkan PIN rahasia Anda, lalu masukkan
+                        link Google Maps yang baru. Prosesnya hanya butuh 10 detik.</p>
                 </div>
             </div>
         </div>
@@ -461,8 +509,10 @@
     <section class="py-24 px-4 bg-white text-center">
         <div class="max-w-4xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold-display text-google-text mb-6">SIAP NAIKKAN RATING ANDA?</h2>
-            <p class="text-xl text-gray-600 font-medium mb-10">Tinggalkan cara lama. Mulai kumpulkan ulasan bintang 5 hari ini.</p>
-            <a href="#harga" class="inline-flex items-center justify-center gap-2 px-12 py-5 bg-google-blue text-white font-bold-display text-xl uppercase rounded-xl border-4 border-google-text cursor-pointer transition-all shadow-[6px_6px_0px_#111827] hover:-translate-y-2 hover:shadow-[10px_10px_0px_#111827] active:translate-y-1 active:shadow-[2px_2px_0px_#111827]">
+            <p class="text-xl text-gray-700 font-medium mb-10">Tinggalkan cara lama. Mulai kumpulkan ulasan bintang 5
+                hari ini.</p>
+            <a href="#harga" aria-label="Beli Kartu Sekarang"
+                class="inline-flex items-center justify-center gap-2 px-12 py-5 bg-google-blue text-white font-bold-display text-xl uppercase rounded-xl border-4 border-google-text cursor-pointer transition-all shadow-[6px_6px_0px_#111827] hover:-translate-y-2 hover:shadow-[10px_10px_0px_#111827] active:translate-y-1 active:shadow-[2px_2px_0px_#111827]">
                 BELI KARTU SEKARANG
             </a>
         </div>
@@ -481,6 +531,24 @@
         <p class="text-sm font-bold text-gray-400">&copy; {{ date('Y') }} All Rights Reserved.</p>
     </footer>
 
+    <script>
+        let lastScrollTop = 0;
+        const navbar = document.getElementById("navbar");
+
+        window.addEventListener("scroll", function() {
+            let currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+            if (currentScroll > lastScrollTop) {
+                // Scroll ke bawah -> geser navbar keluar layar
+                navbar.classList.add("-translate-y-full");
+            } else {
+                // Scroll ke atas -> kembalikan ke posisi semula
+                navbar.classList.remove("-translate-y-full");
+            }
+            
+            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        });
+    </script>
 </body>
 
 </html>

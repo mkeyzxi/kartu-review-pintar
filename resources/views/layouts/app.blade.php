@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Kartu Pintar | Kartu NFC & QR Review Google Maps')</title>
-    <meta name="description" content="Kartu Pintar adalah kartu NFC & QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
+    <title>@yield('title', 'Kartu Pintar | Kartu NFC dan QR Review Google Maps')</title>
+    <meta name="description" content="Kartu Pintar adalah kartu NFC dan QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
     <meta name="keywords" content="kartu review Google Maps, kartu NFC Google Maps, kartu QR Google Maps, kartu review NFC, kartu review QR, kartu Google Maps, NFC review card, QR review card, smart review card, kartu digital bisnis, kartu review pelanggan">
     <link rel="canonical" href="https://kartupintar.my.id">
 
     {{-- Favicon & OpenGraph Meta Tags --}}
     <link rel="icon" type="image/jpeg" href="{{ asset('logo-kartu-pintar.jpg') }}">
-    <meta property="og:title" content="@yield('title', 'Kartu Pintar | Kartu NFC & QR Review Google Maps')">
-    <meta property="og:description" content="Kartu Pintar adalah kartu NFC & QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
+    <meta property="og:title" content="@yield('title', 'Kartu Pintar | Kartu NFC dan QR Review Google Maps')">
+    <meta property="og:description" content="Kartu Pintar adalah kartu NFC dan QR yang memudahkan pelanggan memberikan review Google Maps. Cocok untuk UMKM, restoran, toko, hotel, dan bisnis lainnya.">
     <meta property="og:image" content="{{ asset('logo-kartu-pintar.jpg') }}">
     <meta property="og:url" content="https://kartupintar.my.id">
     <meta property="og:type" content="website">
@@ -195,7 +195,7 @@
 
         {{-- Footer --}}
         <p class="mt-12 text-sm font-bold text-gray-400 text-center">
-            &copy; {{ date('Y') }} KARTU REVIEW PINTAR NFC &amp; QR
+            &copy; {{ date('Y') }} KARTU REVIEW PINTAR NFC DAN QR
         </p>
     </main>
 
