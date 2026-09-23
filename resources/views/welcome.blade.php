@@ -411,7 +411,7 @@
                 <h3 class="text-3xl font-bold-display text-google-text mb-4 mt-4">PAKET STANDAR</h3>
                 <div class="flex justify-center items-end gap-2 mb-8">
                     <span class="text-2xl font-bold text-gray-400 line-through">Rp 115.000</span>
-                    <span class="text-5xl font-bold-display text-google-green">Rp 50.000</span>
+                    <span class="text-5xl font-bold-display text-google-green">Rp 75.000</span>
                 </div>
 
                 <ul class="text-left space-y-4 font-bold text-gray-700 mb-10 max-w-sm mx-auto">
@@ -545,7 +545,7 @@
                 // Scroll ke atas -> kembalikan ke posisi semula
                 navbar.classList.remove("-translate-y-full");
             }
-            
+
             lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
         });
     </script>
