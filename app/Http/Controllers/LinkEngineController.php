@@ -39,11 +39,31 @@ class LinkEngineController extends Controller
         }
 
         if ($link->is_claimed) {
+            $agent = new \Jenssegers\Agent\Agent();
+            $ipHash = hash('sha256', request()->ip());
+            
+            $deviceType = 'desktop';
+            if ($agent->isTablet()) {
+                $deviceType = 'tablet';
+            } elseif ($agent->isMobile()) {
+                $deviceType = 'mobile';
+            }
+
+            // Duplicate check
+            $isDuplicate = ScanLog::where('link_id', $link->id)
+                ->where('ip_hash', $ipHash)
+                ->where('created_at', '>=', now()->subSeconds(10))
+                ->exists();
+
             // Catat scan log
             ScanLog::create([
-                'link_id'    => $link->id,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
+                'link_id'     => $link->id,
+                'ip_hash'     => $ipHash,
+                'device_type' => $deviceType,
+                'browser'     => $agent->browser(),
+                'referrer'    => request()->headers->get('referer'),
+                'user_agent'  => request()->userAgent(),
+                'status'      => $isDuplicate ? 'duplicate' : 'valid',
             ]);
 
             // Redirect langsung ke Google Maps

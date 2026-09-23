@@ -12,7 +12,12 @@ class ScanLog extends Model
     protected $fillable = [
         'link_id',
         'ip_address',
+        'ip_hash',
         'user_agent',
+        'device_type',
+        'browser',
+        'referrer',
+        'status',
     ];
 
     /**

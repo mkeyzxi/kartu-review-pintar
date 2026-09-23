@@ -217,9 +217,6 @@ class AdminDashboardController extends Controller
     return back()->with('success', count($generated) . ' kartu baru berhasil dibuat.');
   }
 
-  /**
-   * Download QR Code untuk kartu.
-   */
   public function downloadQr($id)
   {
     if (!session('admin_logged_in')) {
@@ -237,5 +234,135 @@ class AdminDashboardController extends Controller
     return response($qrCode)
       ->header('Content-type', 'image/png')
       ->header('Content-Disposition', 'attachment; filename="qrcode-' . $link->slug . '.png"');
+  }
+
+  /**
+   * Update label kartu (lokasi/penempatan).
+   */
+  public function updateLabel(Request $request, $id)
+  {
+    if (!session('admin_logged_in')) {
+      abort(403);
+    }
+
+    $request->validate([
+      'label' => 'nullable|string|max:100',
+    ]);
+
+    $link = Link::findOrFail($id);
+    $link->update([
+      'label' => $request->label,
+    ]);
+
+    return back()->with('success', 'Label kartu berhasil diperbarui.');
+  }
+
+  public function analytics(Request $request)
+  {
+    if (!session('admin_logged_in')) {
+      return redirect()->route('admin.login');
+    }
+
+    $availableYears = \App\Models\ScanLog::where('status', 'valid')->selectRaw('YEAR(created_at) as year')->distinct()->orderByDesc('year')->pluck('year');
+    $availableMonths = collect();
+    $availableDays = collect();
+
+    $selectedYear = $request->input('year');
+    $selectedMonth = $request->input('month');
+    $selectedDay = $request->input('day');
+
+    if ($selectedYear) {
+      $availableMonths = \App\Models\ScanLog::where('status', 'valid')->whereYear('created_at', $selectedYear)->selectRaw('MONTH(created_at) as month')->distinct()->orderBy('month')->pluck('month');
+    }
+    if ($selectedYear && $selectedMonth) {
+      $availableDays = \App\Models\ScanLog::where('status', 'valid')->whereYear('created_at', $selectedYear)->whereMonth('created_at', $selectedMonth)->selectRaw('DAY(created_at) as day')->distinct()->orderBy('day')->pluck('day');
+    }
+
+    $baseQuery = \App\Models\ScanLog::where('status', 'valid');
+    if ($selectedYear) $baseQuery->whereYear('created_at', $selectedYear);
+    if ($selectedMonth) $baseQuery->whereMonth('created_at', $selectedMonth);
+    if ($selectedDay) {
+        $formattedDate = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $selectedDay);
+        $baseQuery->whereDate('created_at', $formattedDate);
+    }
+
+    $totalScans = (clone $baseQuery)->count();
+    $todayScans = \App\Models\ScanLog::where('status', 'valid')->whereDate('created_at', today())->count();
+    $monthScans = \App\Models\ScanLog::where('status', 'valid')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+
+    // Data grafik dinamis
+    $chartLabels = [];
+    $chartData = [];
+
+    if ($selectedYear && $selectedMonth && $selectedDay) {
+      // Grafik per jam dalam 1 hari
+      $formattedDate = sprintf('%04d-%02d-%02d', $selectedYear, $selectedMonth, $selectedDay);
+      $hourlyData = \App\Models\ScanLog::where('status', 'valid')->whereDate('created_at', $formattedDate)
+        ->selectRaw('HOUR(created_at) as hour, count(*) as total')
+        ->groupBy('hour')->pluck('total', 'hour')->toArray();
+      for ($i = 0; $i < 24; $i++) {
+        $chartLabels[] = sprintf('%02d:00', $i);
+        $chartData[] = $hourlyData[$i] ?? 0;
+      }
+    } elseif ($selectedYear && $selectedMonth) {
+      // Grafik per hari dalam 1 bulan
+      $daysInMonth = \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->daysInMonth;
+      $dailyData = \App\Models\ScanLog::where('status', 'valid')->whereYear('created_at', $selectedYear)->whereMonth('created_at', $selectedMonth)
+        ->selectRaw('DAY(created_at) as day, count(*) as total')
+        ->groupBy('day')->pluck('total', 'day')->toArray();
+      for ($i = 1; $i <= $daysInMonth; $i++) {
+        $chartLabels[] = $i;
+        $chartData[] = $dailyData[$i] ?? 0;
+      }
+    } elseif ($selectedYear) {
+      // Grafik per bulan dalam 1 tahun
+      $monthlyData = \App\Models\ScanLog::where('status', 'valid')->whereYear('created_at', $selectedYear)
+        ->selectRaw('MONTH(created_at) as month, count(*) as total')
+        ->groupBy('month')->pluck('total', 'month')->toArray();
+      $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      for ($i = 1; $i <= 12; $i++) {
+        $chartLabels[] = $monthNames[$i-1];
+        $chartData[] = $monthlyData[$i] ?? 0;
+      }
+    } else {
+      // Default: Grafik 7 hari terakhir
+      for ($i = 6; $i >= 0; $i--) {
+        $date = now()->subDays($i);
+        $chartLabels[] = $date->translatedFormat('D');
+        $chartData[] = \App\Models\ScanLog::where('status', 'valid')->whereDate('created_at', $date)->count();
+      }
+    }
+
+    // Kartu paling sering digunakan (berdasarkan filter)
+    $topCards = (clone $baseQuery)
+      ->selectRaw('link_id, count(*) as total_scan')
+      ->groupBy('link_id')
+      ->orderByDesc('total_scan')
+      ->take(10)
+      ->with('link')
+      ->get();
+
+    // Aktivitas terbaru (berdasarkan filter)
+    $recentScans = (clone $baseQuery)
+      ->with('link')
+      ->orderByDesc('created_at')
+      ->take(10)
+      ->get();
+
+    return view('admin.analytics', compact(
+      'totalScans',
+      'todayScans',
+      'monthScans',
+      'chartLabels',
+      'chartData',
+      'topCards',
+      'recentScans',
+      'availableYears',
+      'availableMonths',
+      'availableDays',
+      'selectedYear',
+      'selectedMonth',
+      'selectedDay'
+    ));
   }
 }
