@@ -10,12 +10,18 @@
             <h1 class="text-4xl font-bold-display text-google-text">ADMIN DASHBOARD</h1>
             <p class="text-gray-500 font-medium mt-1">Pantau performa dan kelola kartu review pintar.</p>
         </div>
-        <form action="{{ route('admin.logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-google-text font-bold-display px-4 py-2 rounded-lg border-2 border-google-text shadow-[4px_4px_0px_rgba(17,24,39,0.1)] transition-all">
-                LOGOUT
-            </button>
-        </form>
+        <div class="flex gap-4">
+            <a href="{{ route('admin.analytics') }}" class="bg-google-blue hover:bg-blue-600 text-white font-bold-display px-4 py-2 rounded-lg border-2 border-google-blue shadow-[4px_4px_0px_rgba(17,24,39,0.1)] transition-all flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                ANALYTICS
+            </a>
+            <form action="{{ route('admin.logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-google-text font-bold-display px-4 py-2 rounded-lg border-2 border-google-text shadow-[4px_4px_0px_rgba(17,24,39,0.1)] transition-all">
+                    LOGOUT
+                </button>
+            </form>
+        </div>
     </div>
 
     @if (session('success'))
@@ -122,6 +128,15 @@
                                 <label class="text-xs font-bold text-gray-500 block mb-1">NAMA TOKO:</label>
                                 <div class="flex gap-2">
                                     <input type="text" name="store_name" value="{{ $link->store_name }}" class="input-field !py-1 !px-2 !text-sm flex-1 bg-white" placeholder="Belum ada nama">
+                                    <button type="submit" class="bg-google-text text-white px-3 py-1 rounded font-bold text-xs hover:bg-gray-800">SIMPAN</button>
+                                </div>
+                            </form>
+
+                            <form action="{{ route('admin.updateLabel', $link->id) }}" method="POST" class="mb-3">
+                                @csrf
+                                <label class="text-xs font-bold text-gray-500 block mb-1">LABEL KARTU (Misal: Kasir):</label>
+                                <div class="flex gap-2">
+                                    <input type="text" name="label" value="{{ $link->label }}" class="input-field !py-1 !px-2 !text-sm flex-1 bg-white border-google-green" placeholder="Kasir / Meja 01">
                                     <button type="submit" class="bg-google-text text-white px-3 py-1 rounded font-bold text-xs hover:bg-gray-800">SIMPAN</button>
                                 </div>
                             </form>
