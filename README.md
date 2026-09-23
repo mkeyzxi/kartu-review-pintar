@@ -6,7 +6,7 @@
 [![Deploy on Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)](https://railway.app)
 
 > **Satu sentuhan kartu → pelanggan langsung ke halaman ulasan Google Maps bisnis Anda.**
-> Tanpa app, tanpa login, tanpa ribet. Dirancang khusus untuk efisiensi tinggi (skala 50 kartu).
+> Tanpa app, tanpa login, tanpa ribet. Dilengkapi dengan **Sistem Tracking & Analitik** canggih.
 
 ---
 
@@ -14,9 +14,9 @@
 
 **Kartu Review Pintar** adalah sistem backend berbasis Laravel yang menghubungkan kartu fisik (NFC / QR Code) ke halaman ulasan Google Maps (Google My Business) milik suatu bisnis.
 
-Setiap kartu memiliki **slug unik** yang di-encode ke dalam chip NFC atau QR Code. Saat pelanggan mengetuk / men-scan kartu, mereka langsung diarahkan ke halaman ulasan Google Maps — tanpa perlu mengunduh aplikasi apapun.
+Setiap kartu memiliki **slug unik** yang di-encode ke dalam chip NFC atau QR Code. Saat pelanggan mengetuk / men-scan kartu, sistem mencatat data analitik di balik layar, lalu mereka langsung diarahkan ke halaman ulasan Google Maps — tanpa perlu mengunduh aplikasi apapun.
 
-Pemilik bisnis cukup **mengaktifkan** kartunya sekali dengan memasukkan link Google Maps dan membuat PIN rahasia. Setelahnya, setiap scan akan langsung redirect ke halaman ulasan tersebut.
+Sistem juga dilengkapi dengan **Admin Dashboard** & **Halaman Analytics** yang memungkinkan pemilik bisnis untuk memantau penggunaan kartu, melacak traffic berdasarkan hari/bulan/tahun, mendeteksi scan berulang (duplicate), serta melihat device yang paling sering digunakan pelanggan.
 
 ---
 
@@ -24,19 +24,22 @@ Pemilik bisnis cukup **mengaktifkan** kartunya sekali dengan memasukkan link Goo
 
 | Fitur | Deskripsi |
 |---|---|
-| ⚡ **Instant Redirect** | Scan kartu → langsung diarahkan ke Google Maps tanpa friction |
+| ⚡ **Instant Redirect** | Scan kartu → sistem mendata log dalam *background* → langsung ke Google Maps |
+| 📊 **Advanced Analytics** | Pantau jumlah scan per kartu, filter data per tahun/bulan/hari, dan lihat grafik dinamis (*Chart.js*) |
+| 🛡️ **Duplicate Detection** | Fitur anti-spam yang mampu membedakan *scan valid* dan *duplicate scan* (tap berulang kali dalam jeda singkat) |
+| 📱 **Device Tracking** | Pencatatan jenis perangkat (Mobile, Desktop, Tablet) dan browser tanpa mengumpulkan data pribadi (*Privacy First*) |
 | 🔐 **PIN Terenkripsi** | Setiap kartu dilindungi PIN (4–6 digit) yang di-hash dengan Bcrypt |
-| 👤 **Tanpa Akun** | Aktivasi langsung dari kartu, tidak perlu mendaftar |
-| 📋 **Scan Logging** | Setiap scan tercatat (IP address + User-Agent) untuk analitik |
-| 🏭 **Mass Generation** | Admin dapat generate puluhan slug kartu sekaligus untuk cetak massal (optimal untuk 50 kartu) |
-| ✏️ **Editable Link** | Pemilik bisnis dapat mengubah link Google Maps kapan saja via PIN |
+| 👤 **Tanpa Akun** | Aktivasi langsung dari kartu, pelanggan tidak perlu mendaftar |
+| 🏭 **Mass Generation** | Admin dapat generate puluhan slug kartu sekaligus untuk cetak massal (optimal untuk 50+ kartu) |
+| ✏️ **Card Management** | Admin dan pemilik bisnis dapat mengubah link Google Maps, nama toko, hingga memberi *Label* khusus pada kartu (Misal: "Kasir", "Meja 1") |
 
 ---
 
 ## 🔄 Alur Kerja (User Flow)
 
+### Customer Flow (Saat Scan)
 ```
-Pelanggan scan kartu NFC / QR
+Pelanggan tap kartu NFC / scan QR
          │
          ▼
   ┌─────────────┐
@@ -48,100 +51,101 @@ Pelanggan scan kartu NFC / QR
   YA           TIDAK
    │             │
    ▼             ▼
-Catat        Tampilkan
-ScanLog      Form Aktivasi
+ Cek          Tampilkan
+ Duplicate    Form Aktivasi
    │             │
    ▼             ▼
-Redirect     Pemilik isi:
-ke GMB       - Nama Toko
-             - Nomor Telepon
-             - Link Google Maps
-             - PIN 4–6 digit
-                  │
-                  ▼
-             Kartu Aktif ✓
-```
-
-### Edit Link (oleh Pemilik Bisnis)
-```
-GET  /{slug}/edit  → Form verifikasi PIN
-POST /{slug}/edit  → (Step 1) Verifikasi PIN → Form edit URL
-POST /{slug}/edit  → (Step 2) Submit URL baru + re-verifikasi PIN → Simpan
+ Simpan Log   Pemilik isi:
+ (device,     - Nama Toko & Telepon
+  ip_hash)    - Link Google Maps
+   │          - PIN Rahasia
+   ▼             │
+Redirect         ▼
+ke GMB       Kartu Aktif ✓
 ```
 
 ---
 
-## 🗂️ Struktur Project
+## 🗂️ Struktur Project Utama
 
 ```
 sistem-review-google-maps/
 ├── app/
-│   ├── Http/
-│   │   └── Controllers/
-│   │       ├── AdminController.php        # Mass generate slug kartu
-│   │       └── LinkEngineController.php   # Aktivasi, redirect, edit kartu
+│   ├── Http/Controllers/
+│   │   ├── AdminDashboardController.php # Dashboard UI, Analytics, Label
+│   │   ├── AdminController.php          # API / Endpoint untuk Mass generate
+│   │   └── LinkEngineController.php     # Aktivasi, redirect, tracking logic
 │   └── Models/
-│       ├── Link.php                       # Model kartu (slug, url_gmb, pin, is_claimed)
-│       └── ScanLog.php                    # Model log scan (ip, user_agent)
-├── database/
-│   └── migrations/
-│       ├── ..._create_links_table.php     # Tabel kartu
-│       └── ..._create_scan_logs_table.php # Tabel log scan
-├── resources/
-│   └── views/
-│       ├── welcome.blade.php              # Landing page
-│       ├── activate.blade.php             # Form aktivasi kartu
-│       ├── edit-verify.blade.php          # Form verifikasi PIN untuk edit
-│       ├── edit-form.blade.php            # Form ganti URL Google Maps
-│       └── success.blade.php             # Halaman sukses aktivasi
-├── routes/
-│   └── web.php                            # Definisi semua route
-├── nixpacks.toml                          # Konfigurasi build untuk Railway
-└── railway.toml                           # Konfigurasi deploy Railway
+│       ├── Link.php                     # Model kartu (slug, gmb_url, pin, label)
+│       └── ScanLog.php                  # Model log (ip_hash, device, browser, status)
+├── database/migrations/                 # Skema tabel
+├── resources/views/
+│   ├── admin/
+│   │   ├── dashboard.blade.php          # Admin panel & Card management
+│   │   └── analytics.blade.php          # Grafik dan filter analitik
+│   ├── welcome.blade.php                # Landing page
+│   ├── activate.blade.php               # Form aktivasi kartu (untuk user)
+│   └── ...                              # View lainnya
+└── routes/web.php                       # Definisi route
 ```
 
 ---
 
 ## 🗄️ Skema Database (MySQL)
 
-Sistem ini dioptimalkan menggunakan database **MySQL**. Karena volume data untuk 50 kartu sangat kecil, penggunaan penyimpanan database juga sangat minim.
+Sistem ini dioptimalkan menggunakan database **MySQL**.
 
-### Tabel `links`
+### Tabel `links` (Kartu)
 
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | `id` | bigint (PK) | Auto increment |
 | `slug` | varchar(12) | Slug unik kartu (terindex) |
-| `url_gmb` | varchar | URL Google Maps tujuan (nullable) |
-| `is_claimed` | boolean | Status aktivasi kartu (default: false) |
-| `pin` | varchar | PIN terenkripsi Bcrypt (nullable) |
-| `created_at` | timestamp | Waktu dibuat |
-| `updated_at` | timestamp | Waktu diperbarui |
+| `store_name` | varchar | Nama bisnis |
+| `label` | varchar | Penanda lokasi kartu (Misal: Kasir) |
+| `phone_number` | varchar | Kontak bisnis |
+| `url_gmb` | varchar | URL Google Maps tujuan |
+| `is_claimed` | boolean | Status aktivasi kartu |
+| `pin` | varchar | PIN terenkripsi Bcrypt |
+| `is_suspended` | boolean | Status blokir kartu |
+| `expired_at` | timestamp | Masa tenggang berlangganan |
 
-### Tabel `scan_logs`
+### Tabel `scan_logs` (Data Tracking)
 
 | Kolom | Tipe | Keterangan |
 |---|---|---|
 | `id` | bigint (PK) | Auto increment |
-| `link_id` | bigint (FK) | Relasi ke tabel `links` (cascade delete) |
-| `ip_address` | varchar(45) | IP address scanner |
-| `user_agent` | varchar(500) | User-Agent browser/device scanner |
+| `link_id` | bigint (FK) | Relasi ke tabel `links` |
+| `ip_address` | varchar | (Telah dinonaktifkan demi privasi) |
+| `ip_hash` | varchar | IP address yang telah di-hash |
+| `user_agent` | varchar | User-Agent mentah |
+| `device_type` | varchar | Tipe device (mobile/tablet/desktop) |
+| `browser` | varchar | Nama browser yang digunakan |
+| `referrer` | varchar | URL sumber (jika ada) |
+| `status` | varchar | `valid` atau `duplicate` |
 | `created_at` | timestamp | Waktu scan |
 
 ---
 
 ## 🛣️ Daftar Route
 
-| Method | URI | Controller@Method | Nama Route | Keterangan |
-|---|---|---|---|---|
-| `GET` | `/` | Closure | — | Landing page |
-| `GET` | `/admin/generate` | `AdminController@generate` | `admin.generate` | Generate slug massal |
-| `GET` | `/{slug}` | `LinkEngineController@show` | `link.show` | Redirect / form aktivasi |
-| `POST` | `/{slug}` | `LinkEngineController@activate` | `link.activate` | Proses aktivasi kartu |
-| `GET` | `/{slug}/edit` | `LinkEngineController@editVerify` | `link.edit.verify` | Form verifikasi PIN |
-| `POST` | `/{slug}/edit` | `LinkEngineController@editUpdate` | `link.edit.update` | Verifikasi PIN & update URL |
+### Route Customer / Publik
+| Method | URI | Controller | Keterangan |
+|---|---|---|---|
+| `GET` | `/{slug}` | `LinkEngineController@show` | Redirect Tracking / Form aktivasi |
+| `POST` | `/{slug}` | `LinkEngineController@activate` | Proses aktivasi kartu pertama kali |
+| `GET` | `/{slug}/edit` | `LinkEngineController@editVerify` | Form verifikasi PIN |
+| `POST` | `/{slug}/edit` | `LinkEngineController@editUpdate` | Verifikasi PIN & update URL |
 
-> Semua route `/{slug}` dibatasi hanya menerima karakter alphanumerik (`[a-zA-Z0-9]+`).
+### Route Admin Dashboard
+| Method | URI | Controller | Keterangan |
+|---|---|---|---|
+| `GET` | `/admin/login` | `AdminDashboardController@login` | Form login dashboard |
+| `GET` | `/admin/dashboard` | `AdminDashboardController@index` | Manajemen semua kartu |
+| `GET` | `/admin/analytics` | `AdminDashboardController@analytics` | Dashboard grafik & filter waktu |
+| `POST` | `/admin/dashboard/generate` | `AdminDashboardController@generate` | Generate kartu langsung dari UI |
+| `POST` | `/admin/dashboard/update-label/{id}`| `AdminDashboardController@updateLabel` | Update label/lokasi kartu |
+| `GET` | `/admin/dashboard/qr/{id}` | `AdminDashboardController@downloadQr` | Download QR code kartu format PNG |
 
 ---
 
@@ -172,8 +176,6 @@ php artisan key:generate
 # 5. Konfigurasi MySQL
 # Buat database bernama `kartu_review` di server MySQL Anda, lalu sesuaikan file .env:
 # DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
 # DB_DATABASE=kartu_review
 # DB_USERNAME=root
 # DB_PASSWORD=
@@ -184,17 +186,12 @@ php artisan migrate
 # 7. Install dependencies Node.js
 npm install
 
-# 8. Jalankan development server
+# 8. Jalankan development server (jika menggunakan Pail & Vite)
 composer dev
-```
 
-> Perintah `composer dev` akan menjalankan Laravel server, queue worker, log watcher (Pail), dan Vite dev server secara bersamaan.
-
-### One-Command Setup (Opsional)
-```bash
-composer setup
+# Atau jalankan standar:
+php artisan serve
 ```
-Perintah ini otomatis menjalankan setup awal, pastikan kredensial MySQL di `.env` sudah dikonfigurasi dengan benar sebelum memanggil command ini agar migrasi database berhasil berjalan.
 
 ---
 
@@ -202,113 +199,34 @@ Perintah ini otomatis menjalankan setup awal, pastikan kredensial MySQL di `.env
 
 | Variabel | Default | Keterangan |
 |---|---|---|
-| `APP_NAME` | `Laravel` | Nama aplikasi |
-| `APP_ENV` | `local` | Environment (`local` / `production`) |
-| `APP_KEY` | — | Application key (wajib di-generate) |
-| `APP_URL` | `http://localhost` | URL dasar aplikasi |
-| `APP_ADMIN_SECRET` | — | **Secret key untuk akses `/admin/generate`** |
+| `APP_ADMIN_SECRET` | — | **Password/Secret key untuk login Admin Dashboard** |
 | `DB_CONNECTION` | `mysql` | Driver database |
-| `SESSION_DRIVER` | `database` | Driver session |
-| `QUEUE_CONNECTION` | `database` | Driver queue |
 
-> **⚠️ Penting:** Variabel `APP_ADMIN_SECRET` harus diisi dengan string acak yang kuat sebelum deploy ke production.
-
----
-
-## 🏭 Admin: Generate Kartu Massal
-
-Endpoint admin digunakan untuk meng-generate slug kartu dalam jumlah besar (sangat pas untuk batch skala kecil seperti 50 kartu).
-
-**Endpoint:**
-```
-GET /admin/generate?secret=<SECRET>&count=<JUMLAH>
-```
-
-**Parameter:**
-
-| Parameter | Tipe | Wajib | Default | Batas |
-|---|---|---|---|---|
-| `secret` | string | ✅ | — | Harus cocok dengan `APP_ADMIN_SECRET` |
-| `count` | integer | ❌ | `50` | Maks. `500` per request |
-
-**Contoh Response:**
-```json
-{
-  "status": "success",
-  "generated": 50,
-  "slugs": ["abc123xy", "def456gh", "..."],
-  "links": [
-    "https://yourdomain.com/abc123xy",
-    "https://yourdomain.com/def456gh"
-  ],
-  "message": "50 kartu baru berhasil di-generate. Siap cetak!"
-}
-```
-
-Slug yang dihasilkan adalah string acak **8 karakter** (huruf kecil + angka). Daftar link yang dikembalikan siap di-encode ke chip NFC atau dicetak sebagai QR Code.
+> **⚠️ Penting:** Variabel `APP_ADMIN_SECRET` harus diisi dengan string acak yang kuat (karena ini akan menjadi password login Admin).
 
 ---
 
 ## 🚀 Deployment (VPS / Shared Hosting / Railway)
 
-Aplikasi ini sangat ringan dan fleksibel. Anda dapat mendeploynya ke Shared Hosting standar (cPanel), VPS, maupun PaaS seperti Railway.
-
-### Deployment VPS / Shared Hosting
-Jika Anda menggunakan VPS (seperti DigitalOcean) atau Shared Hosting, silakan merujuk pada dokumen panduan lengkap terkait analisis kebutuhannya:
-**[Analisis Kebutuhan Server & Resource](./analisis-project.md)**
+Aplikasi ini ringan dan dioptimalkan dengan Laravel 11. Anda dapat men-deploy ke cPanel (Shared Hosting), VPS (Nginx), atau Railway.
 
 ### Deployment Railway
-
-Project ini juga sudah dikonfigurasi untuk deploy instan ke [Railway](https://railway.app).
-Pastikan menambahkan add-on **MySQL** pada project Railway Anda.
-
 1. Push repository ke GitHub
-2. Buat project baru di Railway → Tambahkan layanan **MySQL Database**
+2. Buat project baru di [Railway](https://railway.app) → Tambahkan **MySQL Database**
 3. Deploy dari GitHub repo Anda
-4. Set environment variables di Railway dashboard:
-   - `APP_KEY` (jalankan `php artisan key:generate --show`)
+4. Tambahkan environment variables:
+   - `APP_KEY`
    - `APP_URL`
    - `APP_ENV=production`
-   - `APP_DEBUG=false`
-   - `APP_ADMIN_SECRET=<secret-key-yang-kuat>`
+   - `APP_ADMIN_SECRET=PASSWORD_RAHASIA_ANDA`
    - Konfigurasi `DB_*` menggunakan variabel koneksi dari MySQL add-on Railway.
 
 ---
 
-## 🛡️ Keamanan
+## 🛡️ Privasi & Keamanan (Privacy-First Tracking)
 
-- **PIN Terenkripsi:** PIN yang dimasukkan pengguna di-hash menggunakan `Hash::make()` (Bcrypt) sebelum disimpan ke database. Verifikasi menggunakan `Hash::check()`.
-- **Admin Secret:** Endpoint `/admin/generate` dilindungi oleh secret key yang dikonfigurasi melalui environment variable `APP_ADMIN_SECRET`.
-- **Validasi Input:** Semua input divalidasi di controller sebelum diproses (URL format, panjang PIN, dll).
-- **Slug Constraint:** Route slug dibatasi hanya karakter alphanumerik untuk mencegah path traversal.
-
----
-
-## 🧰 Tech Stack
-
-| Komponen | Teknologi |
-|---|---|
-| Backend Framework | [Laravel 12](https://laravel.com) |
-| Bahasa | PHP 8.2+ |
-| Database | **MySQL 8.0+** / MariaDB |
-| Frontend Styling | Tailwind CSS (via CDN) |
-| Font | Inter (Google Fonts) |
-| Build Tool | Vite |
-| Testing | PHPUnit |
-
----
-
-## 🧪 Menjalankan Test
-
-```bash
-composer test
-```
-
----
-
-## 📄 Lisensi
-
-Project ini dilisensikan di bawah [MIT License](LICENSE).
+- Sistem **TIDAK** menyimpan alamat IP pelanggan secara telanjang di database. IP di-hash menjadi `ip_hash` (`sha256`) sesaat sebelum masuk ke database untuk menjamin anonimitas, namun tetap mampu mendeteksi aktivitas berulang (*duplicate/spam scan*).
+- Kami menggunakan plugin `jenssegers/agent` yang hanya membaca headers HTTP, bukan data GPS, email, atau personal identity.
 
 ---
 
