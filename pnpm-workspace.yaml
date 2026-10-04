@@ -1,0 +1,4 @@
+allowBuilds:
+  esbuild: set this to true or false
+  protobufjs: false
+  unrs-resolver: false

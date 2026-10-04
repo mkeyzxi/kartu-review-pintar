@@ -1,0 +1,27 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "9router": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "9Router",
+      "options": {
+        "baseURL": "http://localhost:20128/v1",
+        "apiKey": "sk-97e67707af8989de-v4wju1-d924148b"
+      },
+      "models": {
+        "kr/claude-sonnet-4.5": {
+          "name": "Claude Sonnet 4.5"
+        },
+        "kr/claude-sonnet-4.5-thinking": {
+          "name": "Claude Sonnet 4.5 Thinking"
+        },
+        "kr/claude-sonnet-4.5-agentic": {
+          "name": "Claude Sonnet 4.5 Agentic"
+        },
+        "kr/claude-sonnet-4.5-thinking-agentic": {
+          "name": "Claude Sonnet 4.5 Thinking Agentic"
+        }
+      }
+    }
+  }
+}

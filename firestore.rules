@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.admin == true;
+    }
+    
+    // Links collection
+    match /links/{slug} {
+      // Public read untuk aktivasi kartu
+      allow read: if true;
+      
+      // Only admin can create/update/delete
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Scan Logs collection
+    match /scanLogs/{logId} {
+      // Public create untuk scan logging
+      allow create: if true;
+      
+      // Only admin can read/delete
+      allow read: if isAdmin();
+      allow update: if false; // Scan logs immutable
+      allow delete: if isAdmin();
+    }
+    
+    // Admin Users collection
+    match /adminUsers/{userId} {
+      // Only admin can read/write
+      allow read, write: if isAdmin();
+    }
+  }
+}

@@ -1,235 +1,237 @@
-# 🃏 Kartu Review Pintar — NFC & QR Google Maps Review System
+# Kartu Review Pintar - Next.js + Firebase
 
-[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
-[![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://mysql.com)
-[![Deploy on Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)](https://railway.app)
+Sistem kartu review pintar dengan NFC & QR Code, dimigrasi dari Laravel ke Next.js App Router dengan Firebase sebagai backend.
 
-> **Satu sentuhan kartu → pelanggan langsung ke halaman ulasan Google Maps bisnis Anda.**
-> Tanpa app, tanpa login, tanpa ribet. Dilengkapi dengan **Sistem Tracking & Analitik** canggih.
+## Tech Stack
 
----
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Database**: Cloud Firestore
+- **Authentication**: Firebase Authentication
+- **Styling**: Tailwind CSS
+- **Charts**: Recharts
+- **Deployment**: Firebase Hosting / Vercel
 
-## 📖 Deskripsi
+## Fitur
 
-**Kartu Review Pintar** adalah sistem backend berbasis Laravel yang menghubungkan kartu fisik (NFC / QR Code) ke halaman ulasan Google Maps (Google My Business) milik suatu bisnis.
+- [x] Aktivasi kartu NFC/QR
+- [x] Edit URL Google Maps dengan verifikasi PIN
+- [x] Admin dashboard untuk manajemen kartu
+- [x] Analytics scan (device, browser, waktu)
+- [x] Generate kartu massal (hingga 500)
+- [x] QR code generation
+- [x] Sistem suspend/aktifkan kartu
+- [x] Manajemen masa berlangganan
 
-Setiap kartu memiliki **slug unik** yang di-encode ke dalam chip NFC atau QR Code. Saat pelanggan mengetuk / men-scan kartu, sistem mencatat data analitik di balik layar, lalu mereka langsung diarahkan ke halaman ulasan Google Maps — tanpa perlu mengunduh aplikasi apapun.
+## Instalasi
 
-Sistem juga dilengkapi dengan **Admin Dashboard** & **Halaman Analytics** yang memungkinkan pemilik bisnis untuk memantau penggunaan kartu, melacak traffic berdasarkan hari/bulan/tahun, mendeteksi scan berulang (duplicate), serta melihat device yang paling sering digunakan pelanggan.
-
----
-
-## ✨ Fitur Utama
-
-| Fitur | Deskripsi |
-|---|---|
-| ⚡ **Instant Redirect** | Scan kartu → sistem mendata log dalam *background* → langsung ke Google Maps |
-| 📊 **Advanced Analytics** | Pantau jumlah scan per kartu, filter data per tahun/bulan/hari, dan lihat grafik dinamis (*Chart.js*) |
-| 🛡️ **Duplicate Detection** | Fitur anti-spam yang mampu membedakan *scan valid* dan *duplicate scan* (tap berulang kali dalam jeda singkat) |
-| 📱 **Device Tracking** | Pencatatan jenis perangkat (Mobile, Desktop, Tablet) dan browser tanpa mengumpulkan data pribadi (*Privacy First*) |
-| 🔐 **PIN Terenkripsi** | Setiap kartu dilindungi PIN (4–6 digit) yang di-hash dengan Bcrypt |
-| 👤 **Tanpa Akun** | Aktivasi langsung dari kartu, pelanggan tidak perlu mendaftar |
-| 🏭 **Mass Generation** | Admin dapat generate puluhan slug kartu sekaligus untuk cetak massal (optimal untuk 50+ kartu) |
-| ✏️ **Card Management** | Admin dan pemilik bisnis dapat mengubah link Google Maps, nama toko, hingga memberi *Label* khusus pada kartu (Misal: "Kasir", "Meja 1") |
-
----
-
-## 🔄 Alur Kerja (User Flow)
-
-### Customer Flow (Saat Scan)
-```
-Pelanggan tap kartu NFC / scan QR
-         │
-         ▼
-  ┌─────────────┐
-  │ GET /{slug} │
-  └──────┬──────┘
-         │
-   Kartu diklaim?
-    /          \
-  YA           TIDAK
-   │             │
-   ▼             ▼
- Cek          Tampilkan
- Duplicate    Form Aktivasi
-   │             │
-   ▼             ▼
- Simpan Log   Pemilik isi:
- (device,     - Nama Toko & Telepon
-  ip_hash)    - Link Google Maps
-   │          - PIN Rahasia
-   ▼             │
-Redirect         ▼
-ke GMB       Kartu Aktif ✓
-```
-
----
-
-## 🗂️ Struktur Project Utama
-
-```
-sistem-review-google-maps/
-├── app/
-│   ├── Http/Controllers/
-│   │   ├── AdminDashboardController.php # Dashboard UI, Analytics, Label
-│   │   ├── AdminController.php          # API / Endpoint untuk Mass generate
-│   │   └── LinkEngineController.php     # Aktivasi, redirect, tracking logic
-│   └── Models/
-│       ├── Link.php                     # Model kartu (slug, gmb_url, pin, label)
-│       └── ScanLog.php                  # Model log (ip_hash, device, browser, status)
-├── database/migrations/                 # Skema tabel
-├── resources/views/
-│   ├── admin/
-│   │   ├── dashboard.blade.php          # Admin panel & Card management
-│   │   └── analytics.blade.php          # Grafik dan filter analitik
-│   ├── welcome.blade.php                # Landing page
-│   ├── activate.blade.php               # Form aktivasi kartu (untuk user)
-│   └── ...                              # View lainnya
-└── routes/web.php                       # Definisi route
-```
-
----
-
-## 🗄️ Skema Database (MySQL)
-
-Sistem ini dioptimalkan menggunakan database **MySQL**.
-
-### Tabel `links` (Kartu)
-
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | bigint (PK) | Auto increment |
-| `slug` | varchar(12) | Slug unik kartu (terindex) |
-| `store_name` | varchar | Nama bisnis |
-| `label` | varchar | Penanda lokasi kartu (Misal: Kasir) |
-| `phone_number` | varchar | Kontak bisnis |
-| `url_gmb` | varchar | URL Google Maps tujuan |
-| `is_claimed` | boolean | Status aktivasi kartu |
-| `pin` | varchar | PIN terenkripsi Bcrypt |
-| `is_suspended` | boolean | Status blokir kartu |
-| `expired_at` | timestamp | Masa tenggang berlangganan |
-
-### Tabel `scan_logs` (Data Tracking)
-
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | bigint (PK) | Auto increment |
-| `link_id` | bigint (FK) | Relasi ke tabel `links` |
-| `ip_address` | varchar | (Telah dinonaktifkan demi privasi) |
-| `ip_hash` | varchar | IP address yang telah di-hash |
-| `user_agent` | varchar | User-Agent mentah |
-| `device_type` | varchar | Tipe device (mobile/tablet/desktop) |
-| `browser` | varchar | Nama browser yang digunakan |
-| `referrer` | varchar | URL sumber (jika ada) |
-| `status` | varchar | `valid` atau `duplicate` |
-| `created_at` | timestamp | Waktu scan |
-
----
-
-## 🛣️ Daftar Route
-
-### Route Customer / Publik
-| Method | URI | Controller | Keterangan |
-|---|---|---|---|
-| `GET` | `/{slug}` | `LinkEngineController@show` | Redirect Tracking / Form aktivasi |
-| `POST` | `/{slug}` | `LinkEngineController@activate` | Proses aktivasi kartu pertama kali |
-| `GET` | `/{slug}/edit` | `LinkEngineController@editVerify` | Form verifikasi PIN |
-| `POST` | `/{slug}/edit` | `LinkEngineController@editUpdate` | Verifikasi PIN & update URL |
-
-### Route Admin Dashboard
-| Method | URI | Controller | Keterangan |
-|---|---|---|---|
-| `GET` | `/admin/login` | `AdminDashboardController@login` | Form login dashboard |
-| `GET` | `/admin/dashboard` | `AdminDashboardController@index` | Manajemen semua kartu |
-| `GET` | `/admin/analytics` | `AdminDashboardController@analytics` | Dashboard grafik & filter waktu |
-| `POST` | `/admin/dashboard/generate` | `AdminDashboardController@generate` | Generate kartu langsung dari UI |
-| `POST` | `/admin/dashboard/update-label/{id}`| `AdminDashboardController@updateLabel` | Update label/lokasi kartu |
-| `GET` | `/admin/dashboard/qr/{id}` | `AdminDashboardController@downloadQr` | Download QR code kartu format PNG |
-
----
-
-## ⚙️ Instalasi & Menjalankan Lokal
-
-### Prasyarat
-- PHP >= 8.2
-- Composer
-- Node.js & NPM
-- MySQL Server 8.0+ / MariaDB
-
-### Langkah Instalasi
+### 1. Clone Repository
 
 ```bash
-# 1. Clone repository
-git clone <url-repo>
-cd "kartu-review-pintar"
-
-# 2. Install dependencies PHP
-composer install
-
-# 3. Salin file environment
-cp .env.example .env
-
-# 4. Generate application key
-php artisan key:generate
-
-# 5. Konfigurasi MySQL
-# Buat database bernama `kartu_review` di server MySQL Anda, lalu sesuaikan file .env:
-# DB_CONNECTION=mysql
-# DB_DATABASE=kartu_review
-# DB_USERNAME=root
-# DB_PASSWORD=
-
-# 6. Jalankan migrasi database
-php artisan migrate
-
-# 7. Install dependencies Node.js
-npm install
-
-# 8. Jalankan development server (jika menggunakan Pail & Vite)
-composer dev
-
-# Atau jalankan standar:
-php artisan serve
+git clone <repository-url>
+cd kartu-review-pintar
 ```
 
----
+### 2. Install Dependencies
 
-## 🔧 Konfigurasi Environment (`.env`)
+```bash
+npm install
+```
 
-| Variabel | Default | Keterangan |
-|---|---|---|
-| `APP_ADMIN_SECRET` | — | **Password/Secret key untuk login Admin Dashboard** |
-| `DB_CONNECTION` | `mysql` | Driver database |
+### 3. Setup Firebase
 
-> **⚠️ Penting:** Variabel `APP_ADMIN_SECRET` harus diisi dengan string acak yang kuat (karena ini akan menjadi password login Admin).
+1. Buat project baru di [Firebase Console](https://console.firebase.google.com/)
+2. Enable **Firestore Database**
+3. Enable **Authentication** (Email/Password)
+4. Buat service account key:
+   - Project Settings > Service Accounts > Generate New Private Key
+   - Simpan sebagai `scripts/serviceAccountKey.json`
+5. Setup Firestore Security Rules (lihat di bawah)
 
----
+### 4. Setup Environment Variables
 
-## 🚀 Deployment (VPS / Shared Hosting / Railway)
+Copy `.env.example` ke `.env.local`:
 
-Aplikasi ini ringan dan dioptimalkan dengan Laravel 11. Anda dapat men-deploy ke cPanel (Shared Hosting), VPS (Nginx), atau Railway.
+```bash
+cp .env.example .env.local
+```
 
-### Deployment Railway
-1. Push repository ke GitHub
-2. Buat project baru di [Railway](https://railway.app) → Tambahkan **MySQL Database**
-3. Deploy dari GitHub repo Anda
-4. Tambahkan environment variables:
-   - `APP_KEY`
-   - `APP_URL`
-   - `APP_ENV=production`
-   - `APP_ADMIN_SECRET=PASSWORD_RAHASIA_ANDA`
-   - Konfigurasi `DB_*` menggunakan variabel koneksi dari MySQL add-on Railway.
+Isi dengan konfigurasi Firebase Anda:
 
----
+```env
+# Firebase Client Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
-## 🛡️ Privasi & Keamanan (Privacy-First Tracking)
+# Firebase Admin SDK (Server-side only)
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=your-client-email
+FIREBASE_PRIVATE_KEY="your-private-key"
 
-- Sistem **TIDAK** menyimpan alamat IP pelanggan secara telanjang di database. IP di-hash menjadi `ip_hash` (`sha256`) sesaat sebelum masuk ke database untuk menjamin anonimitas, namun tetap mampu mendeteksi aktivitas berulang (*duplicate/spam scan*).
-- Kami menggunakan plugin `jenssegers/agent` yang hanya membaca headers HTTP, bukan data GPS, email, atau personal identity.
+# App Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-admin-password
+```
 
----
+### 5. Jalankan Development Server
 
-<div align="center">
-  <p>© 2026 Kartu Review Pintar NFC & QR · Powered by Laravel</p>
-</div>
+```bash
+npm run dev
+```
+
+Buka [http://localhost:3000](http://localhost:3000) di browser.
+
+## Migrasi Data dari MySQL
+
+Jika Anda memiliki data dari sistem Laravel sebelumnya:
+
+1. Pastikan `serviceAccountKey.json` sudah ada di folder `scripts/`
+2. Jalankan script migrasi:
+
+```bash
+npm run migrate
+```
+
+Script ini akan:
+- Export data dari MySQL
+- Transform ke format Firestore
+- Import ke Firestore dengan batch operations
+
+## Firestore Security Rules
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.admin == true;
+    }
+    
+    // Links collection
+    match /links/{slug} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Scan Logs collection
+    match /scanLogs/{logId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+    
+    // Admin Users collection
+    match /adminUsers/{userId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
+```
+
+## Struktur Proyek
+
+```
+app/
+├── (public)/[slug]/          # Halaman aktivasi kartu
+│   ├── page.tsx
+│   ├── ActivationForm.tsx
+│   └── edit/
+│       ├── page.tsx
+│       └── EditForm.tsx
+├── admin/                     # Admin dashboard
+│   ├── layout.tsx
+│   ├── login/
+│   │   └── page.tsx
+│   └── dashboard/
+│       ├── page.tsx
+│       └── analytics/
+│           └── page.tsx
+├── api/                       # API routes
+│   ├── links/[slug]/
+│   │   ├── route.ts
+│   │   ├── activate/
+│   │   └── edit/
+│   ├── admin/
+│   │   ├── auth/
+│   │   ├── links/
+│   │   ├── generate/
+│   │   └── analytics/
+│   └── scan/
+│       └── log/
+├── layout.tsx
+├── page.tsx
+└── globals.css
+
+components/
+└── ui/                        # Reusable UI components
+
+hooks/                         # Custom React hooks
+
+lib/
+├── firebase/                  # Firebase configuration
+├── firestore/                 # Firestore helpers
+└── utils/                     # Utility functions
+
+scripts/
+└── migrate-to-firestore.js    # Data migration script
+
+types/                         # TypeScript type definitions
+```
+
+## API Endpoints
+
+### Public API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/links/{slug}` | Get link by slug |
+| POST | `/api/links/{slug}/activate` | Activate card |
+| POST | `/api/links/{slug}/edit` | Edit URL (with PIN) |
+| POST | `/api/scan/log/{slug}` | Log scan event |
+
+### Admin API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/auth/login` | Admin login |
+| POST | `/api/admin/auth/logout` | Admin logout |
+| GET | `/api/admin/links` | Get all links (paginated) |
+| GET | `/api/admin/links/stats` | Get links statistics |
+| PATCH | `/api/admin/links/{id}` | Update link |
+| POST | `/api/admin/links/{id}/suspend` | Toggle suspend |
+| POST | `/api/admin/links/{id}/expiry` | Update expiry |
+| POST | `/api/admin/links/{id}/label` | Update label |
+| GET | `/api/admin/links/{id}/qr` | Generate QR code |
+| POST | `/api/admin/generate` | Generate new cards |
+| GET | `/api/admin/analytics` | Get analytics data |
+
+## Deployment
+
+### Firebase Hosting
+
+```bash
+npm run build
+firebase deploy
+```
+
+### Vercel
+
+1. Push ke GitHub
+2. Import project di [Vercel](https://vercel.com/)
+3. Setup environment variables
+4. Deploy
+
+## License
+
+MIT

@@ -1,30 +1,43 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
+# dependencies
 /node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+/.pnp
+.pnp.js
+.yarn/install-state.gz
 
-# Ignore all .md files
-*.md
+# testing
+/coverage
 
-# Except README.md
-!README.md
-Homestead.json
-Homestead.yaml
-Thumbs.db
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# firebase
+firebase-debug.log
+.firebaserc
+
+# service account keys
+serviceAccountKey.json
+scripts/serviceAccountKey.json
