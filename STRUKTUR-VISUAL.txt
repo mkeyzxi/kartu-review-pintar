@@ -1,0 +1,93 @@
+kartu-review-pintar/
+│
+├── 📱 app/                          # Next.js App Router
+│   ├── (public)/                    # Public routes (no auth required)
+│   │   └── [slug]/                  # Dynamic public link pages
+│   ├── admin/                       # Admin section (auth required)
+│   │   ├── analytics/               # Analytics dashboard
+│   │   ├── dashboard/               # Main admin dashboard
+│   │   ├── login/                   # Admin login page
+│   │   └── layout.tsx               # Admin layout wrapper
+│   ├── api/                         # API endpoints (backend)
+│   ├── layout.tsx                   # Root layout (wraps all pages)
+│   ├── page.tsx                     # Homepage
+│   ├── error.tsx                    # Global error boundary
+│   ├── loading.tsx                  # Global loading state
+│   ├── not-found.tsx                # 404 page
+│   └── globals.css                  # Global styles
+│
+├── 🧩 components/                   # React components
+│   ├── ui/                          # Reusable UI components
+│   ├── features/                    # Feature-specific components
+│   │   └── README.md                # Guide for feature components
+│   ├── layout/                      # Layout components (Header, Footer, etc)
+│   │   └── README.md                # Layout component guide
+│   └── index.ts                     # Component exports
+│
+├── 🪝 hooks/                        # Custom React hooks
+│   └── README.md                    # Hook templates and examples
+│
+├── 📚 lib/                          # Business logic & utilities
+│   ├── auth/                        # Authentication logic
+│   ├── firebase/                    # Firebase configuration
+│   ├── firestore/                   # Firestore database operations
+│   └── utils/                       # Utility functions
+│
+├── 🏷️  types/                       # TypeScript type definitions
+│   ├── api.ts                       # API types
+│   ├── link.ts                      # Link model types
+│   └── scan-log.ts                  # Scan log types
+│
+├── ✅ schemas/                      # Zod validation schemas
+│   └── README.md                    # Schema templates
+│
+├── 🎯 constants/                    # App constants & config
+│   └── README.md                    # Constants guide
+│
+├── 🌍 public/                       # Static assets
+│   ├── images/                      # Image files
+│   └── icons/                       # Icon files
+│
+├── 🛠️  scripts/                     # Utility scripts
+│   └── migrate-to-firestore.js      # Database migration script
+│
+├── 📄 Configuration Files
+│   ├── next.config.js               # Next.js configuration
+│   ├── tailwind.config.ts           # Tailwind CSS config
+│   ├── tsconfig.json                # TypeScript config
+│   ├── postcss.config.js            # PostCSS config
+│   ├── package.json                 # Dependencies & scripts
+│   ├── .env.local                   # Environment variables (local)
+│   ├── .env.example                 # Environment variables template
+│   ├── .gitignore                   # Git ignore rules
+│   └── middleware.ts                # Next.js middleware
+│
+└── 📖 Documentation
+    ├── PROJECT-STRUCTURE.md         # Complete structure documentation
+    ├── QUICK-START.md               # Quick reference guide
+    └── README.md                    # Project readme
+
+═══════════════════════════════════════════════════════════════
+
+🎯 CLEAN STRUCTURE FEATURES:
+
+✨ Organized by Function
+   - Clear separation: routes, components, logic, types
+   - Easy to find files (no mixing Laravel & Next.js)
+
+📦 Scalable Architecture
+   - Room to grow (features/, hooks/, schemas/)
+   - Follows Next.js 14 best practices
+
+🚀 Developer Friendly
+   - Clear naming conventions
+   - Comprehensive documentation
+   - Template files with examples
+
+🔥 Modern Stack
+   - Next.js 14 (App Router)
+   - TypeScript + Tailwind CSS
+   - Firebase (Auth + Firestore)
+   - Zod validation
+
+═══════════════════════════════════════════════════════════════
