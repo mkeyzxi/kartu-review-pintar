@@ -107,86 +107,68 @@ export async function deleteLink(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
 
-/**
- * Get all links with pagination
- */
 export async function getLinks(options: {
     page?: number;
     limit?: number;
     search?: string;
     status?: "active" | "inactive" | "suspended" | "expired";
-    lastDoc?: DocumentSnapshot | null;
 }): Promise<{
     links: Link[];
-    lastDoc: DocumentSnapshot | null;
     total: number;
 }> {
-    const { page = 1, limit: pageSize = 20, search, status, lastDoc } = options;
+    const { page = 1, limit: pageSize = 20, search, status } = options;
 
-    const constraints: QueryConstraint[] = [];
-
-    // Status filter
-    if (status) {
-        const now = Timestamp.now();
-        switch (status) {
-            case "active":
-                constraints.push(where("isClaimed", "==", true));
-                constraints.push(where("isSuspended", "==", false));
-                break;
-            case "inactive":
-                constraints.push(where("isClaimed", "==", false));
-                break;
-            case "suspended":
-                constraints.push(where("isSuspended", "==", true));
-                break;
-            case "expired":
-                constraints.push(where("expiredAt", "<=", now));
-                break;
-        }
-    }
-
-    // Search filter
-    if (search) {
-        constraints.push(
-            where("slug", ">=", search),
-            where("slug", "<=", search + "\uf8ff"),
-        );
-    }
-
-    // Order handling: if search filter is applied, order by slug for range queries; otherwise order by createdAt desc
-    if (search) {
-        // Firestore requires ordering by the field used in range filter first
-        constraints.push(orderBy("slug", "asc"));
-    } else {
-        constraints.push(orderBy("createdAt", "desc"));
-    }
-    // Pagination: if a last document snapshot is provided, continue after it
-    if (lastDoc) {
-        constraints.push(startAfter(lastDoc));
-    }
-    constraints.push(limit(pageSize));
-
-    const q = query(collection(db, COLLECTION_NAME), ...constraints);
+    const q = query(collection(db, COLLECTION_NAME));
     const snapshot = await getDocs(q);
 
-    const links = snapshot.docs.map((doc) => ({
+    let links = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
     })) as Link[];
 
-    const lastVisible =
-        snapshot.docs.length > 0
-            ? snapshot.docs[snapshot.docs.length - 1]
-            : null;
+    // Sort by createdAt desc by default
+    links.sort((a, b) => {
+        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt as string);
+        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt as string);
+        return dateB.getTime() - dateA.getTime();
+    });
 
-    // Get total count
-    const countQuery = query(collection(db, COLLECTION_NAME));
-    const countSnapshot = await getDocs(countQuery);
+    // Apply Search
+    if (search) {
+        const searchLower = search.toLowerCase();
+        links = links.filter(link => 
+            link.slug.toLowerCase().includes(searchLower) || 
+            (link.storeName && link.storeName.toLowerCase().includes(searchLower))
+        );
+    }
+
+    // Apply Status
+    if (status) {
+        const now = new Date();
+        if (status === "active") {
+            links = links.filter(link => link.isClaimed && !link.isSuspended);
+        } else if (status === "inactive") {
+            links = links.filter(link => !link.isClaimed);
+        } else if (status === "suspended") {
+            links = links.filter(link => link.isSuspended);
+        } else if (status === "expired") {
+            links = links.filter(link => {
+                if (!link.expiredAt) return false;
+                const expDate = link.expiredAt instanceof Timestamp ? link.expiredAt.toDate() : new Date(link.expiredAt as string);
+                return expDate <= now;
+            });
+        }
+    }
+
+    const total = links.length;
+    
+    // Pagination
+    const startIndex = (page - 1) * pageSize;
+    const paginatedLinks = links.slice(startIndex, startIndex + pageSize);
 
     return {
-        links,
-        lastDoc: lastVisible,
-        total: countSnapshot.size,
+        links: paginatedLinks,
+        total,
     };
 }
 

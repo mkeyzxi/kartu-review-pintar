@@ -39,5 +39,11 @@ service cloud.firestore {
       // Only admin can read/write
       allow read, write: if isAdmin();
     }
+    
+    // Admins collection (used for login)
+    match /admins/{adminId} {
+      // Only admin can read/write
+      allow read, write: if isAdmin();
+    }
   }
 }
