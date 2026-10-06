@@ -107,9 +107,6 @@ export async function deleteLink(id: string): Promise<void> {
     await deleteDoc(docRef);
 }
 
-/**
- * Get all links with pagination
- */
 export async function getLinks(options: {
     page?: number;
     limit?: number;

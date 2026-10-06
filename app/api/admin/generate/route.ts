@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
     
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
-    return NextResponse.json<GenerateResponse>({
+    return NextResponse.json<GenerateResponse & { success: boolean }>({
+      success: true,
       status: 'success',
       generated: createdLinks.length,
       slugs: createdLinks.map((l) => l.slug),

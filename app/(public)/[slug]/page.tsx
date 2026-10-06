@@ -1,5 +1,5 @@
 import { getLinkBySlug } from '@/lib/firestore/links';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ActivationForm from './ActivationForm';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
@@ -107,27 +107,7 @@ async function LinkData({ slug }: { slug: string }) {
   
   // If already claimed, redirect to GMB
   if (link.isClaimed && link.urlGmb) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white px-4">
-        <div className="w-full max-w-md animate-fade-up">
-          <div className="card-solid p-6 sm:p-8 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl mb-3 sm:mb-4 bg-google-green border-2 border-google-text shadow-google-sm">
-              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold-display text-google-text mb-2">KARTU SUDAH AKTIF</h1>
-            <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Mengalihkan ke Google Maps...</p>
-            <a
-              href={link.urlGmb}
-              className="btn-google-blue text-sm sm:text-base"
-            >
-              BUKA GOOGLE MAPS
-            </a>
-          </div>
-        </div>
-      </div>
-    );
+    redirect(link.urlGmb);
   }
   
   // Show activation form
