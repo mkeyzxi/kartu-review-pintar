@@ -16,6 +16,37 @@ import { ScanLog, CreateScanLogInput, AnalyticsData, TopCard, RecentScan } from 
 
 const COLLECTION_NAME = 'scanLogs';
 
+// Cache untuk analytics data
+const analyticsCache = new Map<string, { data: AnalyticsData; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 menit
+
+/**
+ * Retry mechanism untuk Firestore operations
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`[withRetry] Attempt ${i + 1}/${maxRetries} failed:`, error);
+      
+      if (i < maxRetries - 1) {
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, i)));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
 /**
  * Create scan log
  */
@@ -81,9 +112,45 @@ export async function getScanLogsByLinkId(linkId: string, limitCount: number = 1
 }
 
 /**
- * Get analytics data
+ * Get analytics data dengan caching dan retry mechanism
  */
 export async function getAnalyticsData(options: {
+  year?: number;
+  month?: number;
+  day?: number;
+}): Promise<AnalyticsData> {
+  const cacheKey = JSON.stringify(options);
+  const cached = analyticsCache.get(cacheKey);
+  
+  // Return cached data jika masih valid
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log('[Analytics] Returning cached data');
+    return cached.data;
+  }
+  
+  // Fetch fresh data dengan retry
+  const data = await withRetry(async () => {
+    return await fetchAnalyticsData(options);
+  });
+  
+  // Simpan ke cache
+  analyticsCache.set(cacheKey, { data, timestamp: Date.now() });
+  
+  return data;
+}
+
+/**
+ * Clear analytics cache (dipanggil saat ada data baru)
+ */
+export function clearAnalyticsCache(): void {
+  analyticsCache.clear();
+  console.log('[Analytics] Cache cleared');
+}
+
+/**
+ * Internal function untuk fetch analytics data dari Firestore
+ */
+async function fetchAnalyticsData(options: {
   year?: number;
   month?: number;
   day?: number;

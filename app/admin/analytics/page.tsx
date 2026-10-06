@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { getAnalyticsData } from '@/lib/firestore/scan-logs';
 import { AnalyticsData } from '@/types/scan-log';
@@ -15,6 +15,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { trackError } from '@/lib/utils/error-tracking';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -31,12 +32,9 @@ export default function AnalyticsPage() {
   const [year, setYear] = useState<string>('');
   const [month, setMonth] = useState<string>('');
   const [day, setDay] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [year, month, day]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -56,10 +54,15 @@ export default function AnalyticsPage() {
       }
     } catch (err) {
       setError('Terjadi kesalahan jaringan');
+      trackError(err as Error, { context: 'fetch_analytics' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [year, month, day]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const chartData = {
     labels: data?.chartLabels || [],
@@ -113,12 +116,23 @@ export default function AnalyticsPage() {
           </div>
           <h1 className="text-2xl font-bold-display text-google-text mb-2">ERROR</h1>
           <p className="text-sm text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-google-blue"
-          >
-            COBA LAGI
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <button
+              onClick={() => {
+                setRetryCount(prev => prev + 1);
+                fetchAnalytics();
+              }}
+              className="btn-google-blue"
+            >
+              COBA LAGI {retryCount > 0 && `(${retryCount})`}
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-gray-200 hover:bg-gray-300 text-google-text font-bold px-4 py-2 rounded-lg border-2 border-gray-400 transition-all text-sm"
+            >
+              RELOAD HALAMAN
+            </button>
+          </div>
         </div>
       </div>
     );

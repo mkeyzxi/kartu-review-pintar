@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { getLinks, getLinksCount } from '@/lib/firestore/links';
 import { Link as LinkType } from '@/types/link';
 import { Timestamp } from 'firebase/firestore';
+import { ToastContainer, useToast } from '@/components/ui/Toast';
+import { trackError } from '@/lib/utils/error-tracking';
 
 function toDate(value: string | Timestamp): Date {
   if (typeof value === 'string') return new Date(value);
@@ -25,13 +27,12 @@ export default function DashboardPage() {
   const [labelInput, setLabelInput] = useState<Record<string, string>>({});
   const [urlGmbInput, setUrlGmbInput] = useState<Record<string, string>>({});
   const [expiryInput, setExpiryInput] = useState<Record<string, string>>({});
+  const [generating, setGenerating] = useState(false);
+  const [customSlugs, setCustomSlugs] = useState('');
+  
+  const { toasts, addToast, removeToast } = useToast();
 
-  useEffect(() => {
-    fetchLinks();
-    fetchStats();
-  }, [search, statusFilter, page]);
-
-  const fetchLinks = async () => {
+  const fetchLinks = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -52,12 +53,13 @@ export default function DashboardPage() {
       }
     } catch (err) {
       setError('Terjadi kesalahan jaringan');
+      trackError(err as Error, { context: 'fetch_links' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, statusFilter, page]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/links/stats');
       const result = await response.json();
@@ -67,8 +69,23 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error('Error fetching stats:', err);
+      trackError(err as Error, { context: 'fetch_stats' });
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchLinks();
+    fetchStats();
+  }, [fetchLinks, fetchStats]);
+
+  // Auto-refresh setiap 30 detik
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchLinks();
+      fetchStats();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchLinks, fetchStats]);
 
   // Cookie session dikirim browser secara otomatis pada setiap request
 
@@ -84,24 +101,51 @@ export default function DashboardPage() {
     }
   };
 
-  const handleGenerate = async (count: number, storeName?: string) => {
+  const handleGenerate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    
+    const count = parseInt(formData.get('count') as string) || 1;
+    const storeName = formData.get('store_name') as string || undefined;
+    const customSlugsText = formData.get('custom_slugs') as string || '';
+    
+    // Parse custom slugs (satu per baris)
+    const customSlugs = customSlugsText
+      .split('\n')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+    
+    setGenerating(true);
     try {
       const response = await fetch('/api/admin/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ count, store_name: storeName }),
+        body: JSON.stringify({ 
+          count, 
+          store_name: storeName,
+          custom_slugs: customSlugs.length > 0 ? customSlugs : undefined
+        }),
       });
 
       const result = await response.json();
       if (result.success) {
-        alert(result.message);
-        fetchLinks();
-        fetchStats();
+        addToast(result.message, 'success');
+        // Reset form
+        form.reset();
+        setCustomSlugs('');
+        // Force refresh data
+        await Promise.all([fetchLinks(), fetchStats()]);
+      } else {
+        addToast(result.error || 'Gagal generate kartu', 'error');
       }
     } catch (err) {
-      console.error('Error generating cards:', err);
+      addToast('Terjadi kesalahan jaringan', 'error');
+      trackError(err as Error, { context: 'handle_generate' });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -239,7 +283,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-1 card-solid p-4 sm:p-6 bg-gray-50 flex flex-col justify-between">
           <div>
             <h2 className="text-lg sm:text-xl font-bold-display text-google-text mb-3 sm:mb-4">GENERATE KARTU BARU</h2>
-            <form onSubmit={(e) => { e.preventDefault(); const form = e.target as HTMLFormElement; handleGenerate(1, form.store_name.value); }} className="flex flex-col gap-3 sm:gap-4">
+            <form onSubmit={handleGenerate} className="flex flex-col gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">NAMA TOKO (Opsional)</label>
                 <input type="text" name="store_name" className="input-field bg-white text-sm" placeholder="Misal: Kopi Kenangan" />
@@ -248,7 +292,27 @@ export default function DashboardPage() {
                 <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">JUMLAH KARTU</label>
                 <input type="number" name="count" className="input-field bg-white text-sm" min="1" max="500" defaultValue="1" required />
               </div>
-              <button type="submit" className="btn-google-blue mt-2 text-sm sm:text-base">GENERATE</button>
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">CUSTOM SLUG (Opsional)</label>
+                <textarea
+                  name="custom_slugs"
+                  value={customSlugs}
+                  onChange={(e) => setCustomSlugs(e.target.value)}
+                  className="input-field bg-white text-sm"
+                  placeholder={"Masukkan custom slug, satu per baris\nContoh:\nkopi-kenangan\ntokobagus\nmy-store"}
+                  rows={4}
+                />
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Kosongkan untuk generate otomatis. Maksimal 100 slug per request. Format: huruf kecil, angka, strip
+                </p>
+              </div>
+              <button 
+                type="submit" 
+                className="btn-google-blue mt-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={generating}
+              >
+                {generating ? 'MEMPROSES...' : 'GENERATE'}
+              </button>
             </form>
           </div>
         </div>
@@ -483,6 +547,9 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }

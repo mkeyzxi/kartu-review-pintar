@@ -4,6 +4,8 @@ import { createLink, getLinkBySlug } from '@/lib/firestore/links';
 import { generateUniqueSlugs } from '@/lib/utils/slug';
 import { generateSchema } from '@/lib/utils/validation';
 import { ApiResponse, GenerateResponse } from '@/types/api';
+import { clearAnalyticsCache } from '@/lib/firestore/scan-logs';
+import { trackError } from '@/lib/utils/error-tracking';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,10 +26,37 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const { count, store_name } = validation.data;
+    const { count, store_name, custom_slugs } = validation.data;
     
-    // Generate unique slugs
-    const slugs = generateUniqueSlugs(count);
+    let slugs: string[] = [];
+    
+    // Jika ada custom slugs, validasi dan gunakan
+    if (custom_slugs && custom_slugs.length > 0) {
+      // Cek duplikasi di dalam array sendiri
+      const uniqueSlugs = Array.from(new Set(custom_slugs));
+      if (uniqueSlugs.length !== custom_slugs.length) {
+        return NextResponse.json<ApiResponse>(
+          { success: false, error: 'Tidak boleh ada slug duplikat dalam satu request' },
+          { status: 400 }
+        );
+      }
+      
+      // Cek apakah slug sudah digunakan
+      for (const slug of uniqueSlugs) {
+        const existing = await getLinkBySlug(slug);
+        if (existing) {
+          return NextResponse.json<ApiResponse>(
+            { success: false, error: `Slug "${slug}" sudah digunakan. Silakan pilih slug lain.` },
+            { status: 400 }
+          );
+        }
+      }
+      
+      slugs = uniqueSlugs;
+    } else {
+      // Generate random slugs
+      slugs = generateUniqueSlugs(count);
+    }
     
     // Create links
     const createdLinks = [];
@@ -41,6 +70,9 @@ export async function POST(request: NextRequest) {
       createdLinks.push(link);
     }
     
+    // Clear analytics cache karena ada data baru
+    clearAnalyticsCache();
+    
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
     return NextResponse.json<GenerateResponse>({
@@ -52,6 +84,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error generating cards:', error);
+    trackError(error as Error, { context: 'generate_cards' });
     return NextResponse.json<ApiResponse>(
       { success: false, error: 'Terjadi kesalahan server' },
       { status: 500 }

@@ -45,6 +45,12 @@ export const editUpdateSchema = z.object({
 export const generateSchema = z.object({
   count: z.number().int().min(1).max(500).default(1),
   store_name: z.string().max(255).nullable().optional(),
+  custom_slugs: z.array(
+    z.string()
+      .min(3, 'Slug minimal 3 karakter')
+      .max(50, 'Slug maksimal 50 karakter')
+      .regex(/^[a-z0-9-]+$/, 'Slug hanya boleh huruf kecil, angka, dan strip')
+  ).max(100, 'Maksimal 100 custom slug per request').optional(),
 });
 
 export const updateStoreNameSchema = z.object({
