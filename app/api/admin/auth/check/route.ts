@@ -1,23 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminSession } from '@/lib/auth/session';
+import { ApiResponse } from '@/types/api';
 
 /**
  * GET /api/admin/auth/check
  *
- * Returns 200 if the admin-token cookie is present (middleware
+ * Returns 200 if the admin-token cookie is present and valid (middleware
  * already guards this route), or 401 otherwise.
  *
  * Used by the login page's onAuthStateChanged callback to detect
  * whether the server cookie is valid before redirecting.
  */
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('admin-token')?.value;
+  const session = await verifyAdminSession(request);
 
-  if (!token) {
-    return NextResponse.json(
-      { success: false, error: 'Tidak terautentikasi' },
-      { status: 401 }
-    );
+  if ('error' in session) {
+    return session.error;
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json<ApiResponse>({
+    success: true,
+    data: {
+      email: session.email,
+      isAdmin: session.isAdmin,
+    },
+  });
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { getLinkById, updateLink } from '@/lib/firestore/links';
+import { adminGetLinkById, adminUpdateLink } from '@/lib/firestore/admin-links';
 import { updateStoreNameSchema, updateUrlGmbSchema } from '@/lib/utils/validation';
 import { ApiResponse } from '@/types/api';
 
@@ -14,7 +14,7 @@ export async function PATCH(
       return session.error;
     }
     
-    const link = await getLinkById(params.id);
+    const link = await adminGetLinkById(params.id);
     if (!link) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Link tidak ditemukan' },
@@ -33,7 +33,7 @@ export async function PATCH(
           { status: 400 }
         );
       }
-      await updateLink(params.id, { storeName: validation.data.store_name });
+      await adminUpdateLink(params.id, { storeName: validation.data.store_name });
     }
     
     // Update URL GMB
@@ -45,7 +45,7 @@ export async function PATCH(
           { status: 400 }
         );
       }
-      await updateLink(params.id, { urlGmb: validation.data.url_gmb });
+      await adminUpdateLink(params.id, { urlGmb: validation.data.url_gmb });
     }
     
     return NextResponse.json<ApiResponse>({

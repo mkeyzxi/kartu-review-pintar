@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { getLinkById, updateLink } from '@/lib/firestore/links';
+import { adminGetLinkById, adminUpdateLink } from '@/lib/firestore/admin-links';
 import { ApiResponse } from '@/types/api';
 
 export async function POST(
@@ -13,7 +13,7 @@ export async function POST(
       return session.error;
     }
     
-    const link = await getLinkById(params.id);
+    const link = await adminGetLinkById(params.id);
     if (!link) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Link tidak ditemukan' },
@@ -21,7 +21,7 @@ export async function POST(
       );
     }
     
-    await updateLink(params.id, { isSuspended: !link.isSuspended });
+    await adminUpdateLink(params.id, { isSuspended: !link.isSuspended });
     
     return NextResponse.json<ApiResponse>({
       success: true,

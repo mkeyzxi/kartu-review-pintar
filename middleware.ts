@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyAdminSession } from '@/lib/auth/session';
 
 // API routes that must be reachable WITHOUT a cookie (they create / verify the cookie)
 const AUTH_PUBLIC_API = [
@@ -7,8 +8,7 @@ const AUTH_PUBLIC_API = [
   '/api/admin/auth/check',
 ];
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get('admin-token')?.value;
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Always allow auth-helper endpoints (they don't need a cookie yet)
@@ -16,23 +16,49 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Verify the admin session
+  const session = await verifyAdminSession(request);
+
+  // If session verification failed, handle the error
+  if ('error' in session) {
+    // Allow access to login page
+    if (pathname === '/admin/login') {
+      return NextResponse.next();
+    }
+
+    // Protect admin routes
+    if (pathname.startsWith('/admin/')) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+    if (pathname.startsWith('/api/admin/')) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - No valid session' },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.next();
+  }
+
+  const { email, isAdmin } = session;
+
   // Allow access to login page
   if (pathname === '/admin/login') {
-    if (token) {
+    if (email) {
       return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
     return NextResponse.next();
   }
 
-  // Protect admin routes
+  // Protect admin routes - only admin users
   if (pathname.startsWith('/admin/') || pathname.startsWith('/api/admin/')) {
-    if (!token) {
+    if (!isAdmin) {
       if (pathname.startsWith('/admin/')) {
-        return NextResponse.redirect(new URL('/admin/login', request.url));
+        return NextResponse.redirect(new URL('/admin/login?error=not_admin', request.url));
       }
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: 'Unauthorized - Admin access required' },
+        { status: 403 }
       );
     }
   }

@@ -161,7 +161,7 @@ async function fetchAnalyticsData(options: {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   
-  // Base query untuk valid scans
+  // Base query untuk valid scans - hanyailah status valid saja
   const baseConstraints: QueryConstraint[] = [where('status', '==', 'valid')];
   
   if (year) {
@@ -185,6 +185,7 @@ async function fetchAnalyticsData(options: {
     baseConstraints.push(where('createdAt', '<', Timestamp.fromDate(endDate)));
   }
   
+  // Use collection group query only when needed, and add limit for performance
   const baseQuery = query(collection(db, COLLECTION_NAME), ...baseConstraints);
   const baseSnapshot = await getDocs(baseQuery);
   
@@ -277,12 +278,12 @@ async function fetchAnalyticsData(options: {
     });
   }
   
-  // Top cards
+  // Top cards - limited to 100 for better performance
   const topCardsQuery = query(
     collection(db, COLLECTION_NAME),
     where('status', '==', 'valid'),
     orderBy('createdAt', 'desc'),
-    limit(1000)
+    limit(100)
   );
   const topCardsSnapshot = await getDocs(topCardsQuery);
   

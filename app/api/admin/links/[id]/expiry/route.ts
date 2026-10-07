@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { updateLink } from '@/lib/firestore/links';
+import { adminUpdateLink } from '@/lib/firestore/admin-links';
 import { updateExpirySchema } from '@/lib/utils/validation';
 import { Timestamp } from 'firebase/firestore';
 import { ApiResponse } from '@/types/api';
@@ -29,7 +29,7 @@ export async function POST(
       ? Timestamp.fromDate(new Date(validation.data.expired_at))
       : null;
     
-    await updateLink(params.id, { expiredAt });
+    await adminUpdateLink(params.id, { expiredAt });
     
     return NextResponse.json<ApiResponse>({
       success: true,

@@ -7,20 +7,52 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Check if user has admin custom claim from Firebase Auth
     function isAdmin() {
       return isAuthenticated() && 
-             request.auth.token.admin == true;
+        request.auth.token.admin == true;
     }
     
+    // Check if user is the specific Gmail owner (fallback)
+    function isOwner() {
+      return isAuthenticated() && 
+        request.auth.token.email == "your-gmail-admin@domain.com";
+    }
+    
+    // Check if user is admin OR owner
+    function isAdminOrOwner() {
+      return isAdmin() || isOwner();
+    }
+    
+    // Helper functions for links
+    function canManageLinks() {
+      return isAdminOrOwner();
+    }
+    
+    // Helper functions for scan logs
+    function canManageScanLogs() {
+      return isAdmin(); // Only pure admin can manage scan logs
+    }
+    
+    // Helper functions for admin users
+    function canManageAdminUsers() {
+      return isAdmin();
+    }
+    
+    // Helper functions for admins collection
+    function canManageAdmins() {
+      return isAdmin();
+    }
+
     // Links collection
     match /links/{slug} {
       // Public read untuk aktivasi kartu
       allow read: if true;
       
-      // Only admin can create/update/delete
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      // Only admin or owner can create/update/delete
+      allow create: if canManageLinks();
+      allow update: if canManageLinks();
+      allow delete: if canManageLinks();
     }
     
     // Scan Logs collection
@@ -29,21 +61,19 @@ service cloud.firestore {
       allow create: if true;
       
       // Only admin can read/delete
-      allow read: if isAdmin();
+      allow read: if canManageScanLogs();
       allow update: if false; // Scan logs immutable
-      allow delete: if isAdmin();
+      allow delete: if canManageScanLogs();
     }
     
     // Admin Users collection
     match /adminUsers/{userId} {
-      // Only admin can read/write
-      allow read, write: if isAdmin();
+      allow read, write: if canManageAdminUsers();
     }
     
     // Admins collection (used for login)
     match /admins/{adminId} {
-      // Only admin can read/write
-      allow read, write: if isAdmin();
+      allow read, write: if canManageAdmins();
     }
   }
 }

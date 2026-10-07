@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { createLink, getLinkBySlug } from '@/lib/firestore/links';
+import { adminCreateLink, adminGetLinkBySlug } from '@/lib/firestore/admin-links';
 import { generateUniqueSlugs } from '@/lib/utils/slug';
 import { generateSchema } from '@/lib/utils/validation';
 import { ApiResponse, GenerateResponse } from '@/types/api';
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       
       // Cek apakah slug sudah digunakan
       for (const slug of uniqueSlugs) {
-        const existing = await getLinkBySlug(slug);
+        const existing = await adminGetLinkBySlug(slug);
         if (existing) {
           return NextResponse.json<ApiResponse>(
             { success: false, error: `Slug "${slug}" sudah digunakan. Silakan pilih slug lain.` },
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Create links
     const createdLinks = [];
     for (const slug of slugs) {
-      const link = await createLink({
+      const link = await adminCreateLink({
         slug,
         storeName: store_name || null,
         isClaimed: false,

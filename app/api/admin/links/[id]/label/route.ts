@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { updateLink } from '@/lib/firestore/links';
+import { adminUpdateLink } from '@/lib/firestore/admin-links';
 import { updateLabelSchema } from '@/lib/utils/validation';
 import { ApiResponse } from '@/types/api';
 
@@ -24,7 +24,7 @@ export async function POST(
       );
     }
     
-    await updateLink(params.id, { label: validation.data.label });
+    await adminUpdateLink(params.id, { label: validation.data.label });
     
     return NextResponse.json<ApiResponse>({
       success: true,

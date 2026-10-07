@@ -7,24 +7,37 @@ let adminDb: Firestore;
 let adminAuth: Auth;
 
 function getAdminApp(): App {
-  if (!getApps().length) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    
-    if (!privateKey) {
-      throw new Error('FIREBASE_PRIVATE_KEY is not set');
-    }
+  // Check if Firebase Admin SDK environment variables are set
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
 
-    adminApp = initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
-      }),
-    });
+  if (!privateKey || !clientEmail || !projectId) {
+    throw new Error(
+      'Firebase Admin SDK environment variables are not set. ' +
+      'Please check FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and FIREBASE_PROJECT_ID in your .env.local file.'
+    );
+  }
+
+  // Only initialize if not already initialized
+  if (!getApps().length) {
+    try {
+      adminApp = initializeApp({
+        credential: cert({
+          projectId: projectId,
+          clientEmail: clientEmail,
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        }),
+      });
+      console.log('[Firebase Admin] Initialized successfully');
+    } catch (error: any) {
+      console.error('[Firebase Admin] Initialization failed:', error.message);
+      throw new Error(`Firebase Admin SDK initialization failed: ${error.message}`);
+    }
   } else {
     adminApp = getApps()[0];
   }
-  
+
   return adminApp;
 }
 
