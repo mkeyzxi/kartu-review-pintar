@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { getLinks, getLinksCount } from '@/lib/firestore/links';
+import { adminGetLinks, adminGetLinksCount } from '@/lib/firestore/admin-links';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
 import { Link } from '@/types/link';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 /**
  * Convert Firestore Timestamps to ISO strings for JSON serialization.
@@ -35,7 +38,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') as 'active' | 'inactive' | 'suspended' | 'expired' | null;
 
-    const result = await getLinks({
+    const result = await adminGetLinks({
       page,
       limit,
       search,

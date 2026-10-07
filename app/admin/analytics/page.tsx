@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { getAnalyticsData } from '@/lib/firestore/scan-logs';
 import { AnalyticsData } from '@/types/scan-log';
-import { Timestamp } from 'firebase/firestore';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,9 +17,27 @@ import { trackError } from '@/lib/utils/error-tracking';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-function toDate(value: string | Timestamp): Date {
+/**
+ * Convert various date formats to Date object.
+ * Handles: string, Firestore Timestamp, plain object with _seconds/_nanoseconds, Date
+ */
+function toDate(value: any): Date {
+  if (!value) return new Date();
+  if (value instanceof Date) return value;
   if (typeof value === 'string') return new Date(value);
-  if (value instanceof Timestamp) return value.toDate();
+  // Firestore Timestamp (server-side) or serialized object (client-side)
+  if (typeof value === 'object') {
+    // Check for Firestore Timestamp instance (has toDate method)
+    if (typeof value.toDate === 'function') return value.toDate();
+    // Check for serialized Timestamp object (_seconds, _nanoseconds)
+    if ('_seconds' in value && '_nanoseconds' in value) {
+      return new Date(value._seconds * 1000 + value._nanoseconds / 1000000);
+    }
+    // Check for seconds/nanoseconds (alternative format)
+    if ('seconds' in value && 'nanoseconds' in value) {
+      return new Date(value.seconds * 1000 + value.nanoseconds / 1000000);
+    }
+  }
   return new Date(value);
 }
 

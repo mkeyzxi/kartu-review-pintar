@@ -1,23 +1,45 @@
-import { getLinkBySlug } from '@/lib/firestore/links';
+import { adminGetLinkBySlug } from '@/lib/firestore/admin-links';
 import { notFound, redirect } from 'next/navigation';
 import ActivationForm from './ActivationForm';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { Timestamp } from 'firebase/firestore';
 
 interface PageProps {
   params: { slug: string };
 }
 
-function toDate(value: string | Timestamp | null): Date | null {
+function toDate(value: any): Date | null {
   if (!value) return null;
+  if (value instanceof Date) return value;
   if (typeof value === 'string') return new Date(value);
-  if (value instanceof Timestamp) return value.toDate();
+  if (typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  if (typeof value === 'object' && '_seconds' in value && '_nanoseconds' in value) {
+    return new Date(value._seconds * 1000 + value._nanoseconds / 1000000);
+  }
+  if (typeof value === 'object' && 'seconds' in value && 'nanoseconds' in value) {
+    return new Date(value.seconds * 1000 + value.nanoseconds / 1000000);
+  }
   return null;
 }
 
+/**
+ * Firestore Admin Timestamp adalah class instance — tidak boleh dilempar
+ * langsung ke Client Component ("Only plain objects... can be passed").
+ * Serialize ke plain object (ISO string) sebelum render ActivationForm.
+ */
+function serializeLinkForClient(link: any) {
+  return {
+    ...link,
+    createdAt: toDate(link.createdAt)?.toISOString() ?? null,
+    updatedAt: toDate(link.updatedAt)?.toISOString() ?? null,
+    expiredAt: link.expiredAt ? (toDate(link.expiredAt)?.toISOString() ?? null) : null,
+  };
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const link = await getLinkBySlug(params.slug);
+  const link = await adminGetLinkBySlug(params.slug);
   
   if (!link) {
     return {
@@ -60,7 +82,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 async function LinkData({ slug }: { slug: string }) {
-  const link = await getLinkBySlug(slug);
+  const link = await adminGetLinkBySlug(slug);
   
   if (!link) {
     notFound();
@@ -109,9 +131,9 @@ async function LinkData({ slug }: { slug: string }) {
   if (link.isClaimed && link.urlGmb) {
     redirect(link.urlGmb);
   }
-  
-  // Show activation form
-  return <ActivationForm link={link} />;
+
+  // Show activation form (link diserialize dulu — lihat serializeLinkForClient)
+  return <ActivationForm link={serializeLinkForClient(link)} />;
 }
 
 export default function Page({ params }: PageProps) {

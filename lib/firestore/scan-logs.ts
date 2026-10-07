@@ -229,7 +229,10 @@ async function fetchAnalyticsData(options: {
     
     baseSnapshot.docs.forEach((doc) => {
       const data = doc.data();
-      const hour = data.createdAt.toDate().getHours();
+      const createdAt = data.createdAt;
+      const hour = typeof createdAt === 'object' && 'toDate' in createdAt
+        ? createdAt.toDate().getHours()
+        : new Date(createdAt as string).getHours();
       chartData[hour]++;
     });
   } else if (year && month) {
@@ -242,7 +245,10 @@ async function fetchAnalyticsData(options: {
     
     baseSnapshot.docs.forEach((doc) => {
       const data = doc.data();
-      const dayOfMonth = data.createdAt.toDate().getDate();
+      const createdAt = data.createdAt;
+      const dayOfMonth = typeof createdAt === 'object' && 'toDate' in createdAt
+        ? createdAt.toDate().getDate()
+        : new Date(createdAt as string).getDate();
       chartData[dayOfMonth - 1]++;
     });
   } else if (year) {
@@ -255,7 +261,10 @@ async function fetchAnalyticsData(options: {
     
     baseSnapshot.docs.forEach((doc) => {
       const data = doc.data();
-      const monthIndex = data.createdAt.toDate().getMonth();
+      const createdAt = data.createdAt;
+      const monthIndex = typeof createdAt === 'object' && 'toDate' in createdAt
+        ? createdAt.toDate().getMonth()
+        : new Date(createdAt as string).getMonth();
       chartData[monthIndex]++;
     });
   } else {
@@ -269,7 +278,10 @@ async function fetchAnalyticsData(options: {
     
     baseSnapshot.docs.forEach((doc) => {
       const data = doc.data();
-      const scanDate = data.createdAt.toDate();
+      const createdAt = data.createdAt;
+      const scanDate = typeof createdAt === 'object' && 'toDate' in createdAt
+        ? createdAt.toDate()
+        : new Date(createdAt as string);
       const diffTime = now.getTime() - scanDate.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       if (diffDays >= 0 && diffDays < 7) {

@@ -17,7 +17,23 @@ export async function middleware(request: NextRequest) {
   }
 
   // Verify the admin session
-  const session = await verifyAdminSession(request);
+  let session;
+  try {
+    session = await verifyAdminSession(request);
+  } catch (error) {
+    console.error('[Middleware] Session verification error:', error);
+    // If session verification fails, treat as unauthenticated
+    if (pathname.startsWith('/admin/')) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+    if (pathname.startsWith('/api/admin/')) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - Session verification failed' },
+        { status: 401 }
+      );
+    }
+    return NextResponse.next();
+  }
 
   // If session verification failed, handle the error
   if ('error' in session) {

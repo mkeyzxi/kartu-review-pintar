@@ -52,9 +52,15 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    if (!auth) {
+      setError('Firebase Auth tidak tersedia. Pastikan konfigurasi Firebase benar.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Sign in with Firebase Auth
-      const credential = await signInWithEmailAndPassword(auth!, email.trim(), password);
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const idToken = await credential.user.getIdToken();
 
       // 2. Ask the API route to verify token and set HttpOnly cookie

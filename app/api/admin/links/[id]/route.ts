@@ -4,6 +4,9 @@ import { adminGetLinkById, adminUpdateLink } from '@/lib/firestore/admin-links';
 import { updateStoreNameSchema, updateUrlGmbSchema } from '@/lib/utils/validation';
 import { ApiResponse } from '@/types/api';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

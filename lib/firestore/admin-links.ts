@@ -1,6 +1,6 @@
 import { getAdminDb } from "@/lib/firebase/admin";
 import { Link, CreateLinkInput } from "@/types/link";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 const COLLECTION_NAME = "links";
 
@@ -81,3 +81,106 @@ export async function adminDeleteLink(id: string): Promise<void> {
     await docRef.delete();
 }
 
+export async function adminGetLinks(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: "active" | "inactive" | "suspended" | "expired";
+}): Promise<{
+    links: Link[];
+    total: number;
+}> {
+    const { page = 1, limit: pageSize = 20, search, status } = options;
+
+    const db = getAdminDb();
+    const snapshot = await db.collection(COLLECTION_NAME).limit(pageSize).get();
+
+    let links = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+    })) as Link[];
+
+    // Sort by createdAt desc by default
+    links.sort((a, b) => {
+        const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt as string);
+        const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt as string);
+        return dateB.getTime() - dateA.getTime();
+    });
+
+    // Apply Search
+    if (search) {
+        const searchLower = search.toLowerCase();
+        links = links.filter(link => 
+            link.slug.toLowerCase().includes(searchLower) || 
+            (link.storeName && link.storeName.toLowerCase().includes(searchLower))
+        );
+    }
+
+    // Apply Status
+    if (status) {
+        const now = new Date();
+        if (status === "active") {
+            links = links.filter(link => link.isClaimed && !link.isSuspended);
+        } else if (status === "inactive") {
+            links = links.filter(link => !link.isClaimed);
+        } else if (status === "suspended") {
+            links = links.filter(link => link.isSuspended);
+        } else if (status === "expired") {
+            links = links.filter(link => {
+                if (!link.expiredAt) return false;
+                const expDate = link.expiredAt instanceof Timestamp ? link.expiredAt.toDate() : new Date(link.expiredAt as string);
+                return expDate <= now;
+            });
+        }
+    }
+
+    const total = links.length;
+    
+    // Pagination
+    const startIndex = (page - 1) * pageSize;
+    const paginatedLinks = links.slice(startIndex, startIndex + pageSize);
+
+    return {
+        links: paginatedLinks,
+        total,
+    };
+}
+
+export async function adminGetLinksCount(): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    suspended: number;
+    expired: number;
+}> {
+    const db = getAdminDb();
+    const snapshot = await db.collection(COLLECTION_NAME).get();
+
+    const now = Timestamp.now();
+    let active = 0;
+    let inactive = 0;
+    let suspended = 0;
+    let expired = 0;
+
+    snapshot.docs.forEach((doc) => {
+        const data = doc.data();
+
+        if (data.isSuspended) {
+            suspended++;
+        } else if (!data.isClaimed) {
+            inactive++;
+        } else if (data.expiredAt && data.expiredAt <= now) {
+            expired++;
+        } else {
+            active++;
+        }
+    });
+
+    return {
+        total: snapshot.size,
+        active,
+        inactive,
+        suspended,
+        expired,
+    };
+}

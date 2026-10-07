@@ -3,6 +3,9 @@ import { verifyAdminSession } from '@/lib/auth/session';
 import { adminGetLinkById, adminUpdateLink } from '@/lib/firestore/admin-links';
 import { ApiResponse } from '@/types/api';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }

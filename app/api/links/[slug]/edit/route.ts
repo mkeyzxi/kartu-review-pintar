@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLinkBySlug, updateLink } from '@/lib/firestore/links';
+import { adminGetLinkBySlug, adminUpdateLink } from '@/lib/firestore/admin-links';
 import { editVerifySchema, editUpdateSchema } from '@/lib/utils/validation';
 import { verifyPin } from '@/lib/utils/hashing';
 import { ApiResponse } from '@/types/api';
 import { toDate } from '@/lib/utils/date';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
   try {
-    const link = await getLinkBySlug(params.slug);
+    const link = await adminGetLinkBySlug(params.slug);
     
     if (!link) {
       return NextResponse.json<ApiResponse>(
@@ -91,7 +94,7 @@ export async function POST(
     }
     
     // Update URL
-    await updateLink(link.id, {
+    await adminUpdateLink(link.id, {
       urlGmb: validation.data.url_gmb,
     });
     

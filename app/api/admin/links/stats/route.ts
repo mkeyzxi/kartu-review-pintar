@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { getLinksCount } from '@/lib/firestore/links';
+import { adminGetLinksCount } from '@/lib/firestore/admin-links';
 import { ApiResponse } from '@/types/api';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +14,7 @@ export async function GET(request: NextRequest) {
       return session.error;
     }
     
-    const stats = await getLinksCount();
+    const stats = await adminGetLinksCount();
     
     return NextResponse.json<ApiResponse>({
       success: true,

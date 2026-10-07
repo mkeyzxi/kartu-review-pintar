@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Link as LinkType } from '@/types/link';
-import QRCode from 'qrcode';
 
 interface ActivationFormProps {
   link: LinkType;
@@ -50,14 +49,21 @@ export default function ActivationForm({ link }: ActivationFormProps) {
   };
 
   // Generate QR code setelah aktivasi berhasil
+  // Dynamic import agar library `qrcode` (Node-oriented) tidak ikut
+  // terbundel saat module load — ini salah satu pemicu error
+  // "Cannot read properties of undefined (reading 'call')".
   useEffect(() => {
     if (success && link.slug) {
       const url = `${process.env.NEXT_PUBLIC_APP_URL}/${link.slug}`;
-      QRCode.toDataURL(url, {
-        width: 320,
-        margin: 2,
-        color: { dark: '#111827', light: '#FFFFFF' },
-      })
+      import('qrcode')
+        .then((mod) => {
+          const QRCode = mod.default || mod;
+          return QRCode.toDataURL(url, {
+            width: 320,
+            margin: 2,
+            color: { dark: '#111827', light: '#FFFFFF' },
+          });
+        })
         .then(setQrCodeUrl)
         .catch(console.error);
     }

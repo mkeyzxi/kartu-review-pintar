@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLinkBySlug, updateLink } from '@/lib/firestore/links';
+import { adminGetLinkBySlug, adminUpdateLink } from '@/lib/firestore/admin-links';
 import { activateSchema } from '@/lib/utils/validation';
 import { hashPin } from '@/lib/utils/hashing';
 import { ApiResponse } from '@/types/api';
 import { toDate } from '@/lib/utils/date';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
   try {
-    const link = await getLinkBySlug(params.slug);
+    const link = await adminGetLinkBySlug(params.slug);
     
     if (!link) {
       return NextResponse.json<ApiResponse>(
@@ -58,7 +61,7 @@ export async function POST(
     const pinHash = await hashPin(validation.data.pin);
     
     // Update link
-    await updateLink(link.id, {
+    await adminUpdateLink(link.id, {
       urlGmb: validation.data.url_gmb,
       storeName: validation.data.store_name || null,
       phoneNumber: validation.data.phone_number,

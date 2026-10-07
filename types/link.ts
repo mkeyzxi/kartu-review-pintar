@@ -1,4 +1,11 @@
-import { Timestamp } from 'firebase/firestore';
+// Using generic Timestamp type to avoid client SDK dependency in shared types
+export type TimestampLike = {
+  toDate?: () => Date;
+  _seconds?: number;
+  _nanoseconds?: number;
+  seconds?: number;
+  nanoseconds?: number;
+} | string | Date | null;
 
 export interface Link {
   id: string;
@@ -10,9 +17,9 @@ export interface Link {
   isClaimed: boolean;
   pinHash: string | null;
   isSuspended: boolean;
-  expiredAt: Timestamp | string | null;
-  createdAt: Timestamp | string;
-  updatedAt: Timestamp | string;
+  expiredAt: TimestampLike;
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
 }
 
 export interface CreateLinkInput {
@@ -24,7 +31,7 @@ export interface CreateLinkInput {
   isClaimed?: boolean;
   pinHash?: string | null;
   isSuspended?: boolean;
-  expiredAt?: Timestamp | null;
+  expiredAt?: TimestampLike;
 }
 
 export interface UpdateLinkInput {
@@ -35,10 +42,10 @@ export interface UpdateLinkInput {
   isClaimed?: boolean;
   pinHash?: string | null;
   isSuspended?: boolean;
-  expiredAt?: Timestamp | null;
+  expiredAt?: TimestampLike;
 }
 
 export interface LinkWithStats extends Link {
   totalScans?: number;
-  lastScanAt?: Timestamp | null;
+  lastScanAt?: TimestampLike;
 }
