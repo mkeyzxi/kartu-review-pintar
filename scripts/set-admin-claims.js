@@ -2,15 +2,22 @@
  * Script untuk set custom claims admin ke user Firebase Auth specific email.
  * 
  * Cara penggunaan:
- * 1. Pastikan FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, dan PROJECT_ID sudah di-set di environment
- * 2. Jalankan: node scripts/set-admin-claims.js <email>
+ *   node scripts/set-admin-claims.js <email>
  * 
  * Contoh:
  *   node scripts/set-admin-claims.js admin@gmail.com
  */
 
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getAuth } = require('firebase-admin/auth');
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Load environment variables from .env.local
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+config({ path: join(__dirname, '..', '.env.local') });
 
 // Initialize Firebase Admin SDK
 const app = initializeApp({

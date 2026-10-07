@@ -1,6 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ApiResponse } from '@/types/api';
-import { getAdminAuth } from '@/lib/firebase/admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+
+/**
+ * Initialize Firebase Admin SDK directly in the route
+ * to ensure environment variables are read correctly
+ */
+function getAdminAuth() {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+
+  if (!privateKey || !clientEmail || !projectId) {
+    throw new Error(
+      'Firebase Admin SDK environment variables are not set. ' +
+      'Please check FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and FIREBASE_PROJECT_ID in your .env.local file.'
+    );
+  }
+
+  if (!getApps().length) {
+    initializeApp({
+      credential: cert({
+        projectId: projectId,
+        clientEmail: clientEmail,
+        privateKey: privateKey.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+
+  return getAuth();
+}
 
 /**
  * POST /api/admin/auth/session
@@ -9,9 +39,6 @@ import { getAdminAuth } from '@/lib/firebase/admin';
  * an HttpOnly cookie with the user's email for middleware to read.
  *
  * Body: { idToken: string, email: string }
- *
- * The ID token is verified server-side using Firebase Admin SDK.
- * If valid, a base64-encoded email cookie is set for 5 days.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,9 +62,8 @@ export async function POST(request: NextRequest) {
       console.error('[session] ID token verification failed:', {
         code: verifyError.code,
         message: verifyError.message,
-        stack: verifyError.stack,
       });
-      
+
       // Provide more specific error messages
       let errorMessage = 'Token tidak valid atau sudah kedaluwarsa';
       if (verifyError.code === 'auth/argument-error') {
@@ -47,7 +73,7 @@ export async function POST(request: NextRequest) {
       } else if (verifyError.code === 'auth/insufficient-permission') {
         errorMessage = 'Izin tidak cukup untuk verifikasi token';
       }
-      
+
       return NextResponse.json<ApiResponse>(
         { success: false, error: errorMessage, details: verifyError.message },
         { status: 401 }
