@@ -14,28 +14,20 @@ export default function LoginPage() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    console.log('LoginPage: useEffect called');
-
     if (!auth) {
-      console.error('LoginPage: auth is not available');
       setError('Firebase Auth tidak tersedia. Pastikan konfigurasi Firebase benar.');
       setInitializing(false);
       return;
     }
 
-    console.log('LoginPage: auth is available, subscribing to auth state');
-
     const unsubscribe = onAuthStateChanged(
       auth,
       async (user) => {
-        console.log('LoginPage: auth state changed', user ? 'user logged in' : 'no user');
         if (user) {
           // User already has a Firebase session — verify the server cookie too
-          // Fetch a protected endpoint; if it returns 200 the cookie is valid → redirect
           try {
             const res = await fetch('/api/admin/auth/check', { method: 'GET' });
             if (res.ok) {
-              console.log('LoginPage: cookie valid, redirecting to dashboard');
               router.replace('/admin/dashboard');
               return;
             }
@@ -52,10 +44,7 @@ export default function LoginPage() {
       }
     );
 
-    return () => {
-      console.log('LoginPage: unsubscribing from auth state');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,42 +53,11 @@ export default function LoginPage() {
     setError('');
 
     try {
-      console.log('LoginPage: step 1 — Firestore credential check');
+      // 1. Sign in with Firebase Auth
+      const credential = await signInWithEmailAndPassword(auth!, email.trim(), password);
+      const idToken = await credential.user.getIdToken();
 
-      // 1️⃣ Verify credentials against Firestore admins collection
-      const { getFirestore, collection, query, where, getDocs } = await import('firebase/firestore');
-      const db = getFirestore();
-      const adminsCol = collection(db, 'admins');
-      const q = query(adminsCol, where('email', '==', email.trim()));
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
-        throw new Error('Email atau password salah');
-      }
-
-      const adminData = snapshot.docs[0].data();
-
-      // 2️⃣ Simple password check
-      if (adminData.password !== password) {
-        throw new Error('Email atau password salah');
-      }
-
-      console.log('LoginPage: step 2 — signing in with Firebase Auth');
-
-      // 3️⃣ Sign in via Firebase Auth to get an idToken
-      let idToken: string;
-      try {
-        const credential = await signInWithEmailAndPassword(auth!, email.trim(), password);
-        idToken = await credential.user.getIdToken();
-      } catch {
-        // Fallback: admin may not be a Firebase Auth user; use a simple token instead
-        console.warn('LoginPage: Firebase Auth sign-in failed, using Firestore-only token');
-        idToken = '';
-      }
-
-      console.log('LoginPage: step 3 — asking server to set HttpOnly cookie');
-
-      // 4️⃣ Ask the API route to set the cookie server-side so middleware can read it
+      // 2. Ask the API route to verify token and set HttpOnly cookie
       const res = await fetch('/api/admin/auth/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,9 +69,7 @@ export default function LoginPage() {
         throw new Error(data?.error || 'Gagal membuat sesi. Coba lagi.');
       }
 
-      console.log('LoginPage: cookie set by server, redirecting to dashboard');
-
-      // 5️⃣ Hard navigate so the next request carries the fresh cookie
+      // 3. Hard navigate so the next request carries the fresh cookie
       window.location.href = '/admin/dashboard';
     } catch (err: unknown) {
       console.error('LoginPage: login error', err);

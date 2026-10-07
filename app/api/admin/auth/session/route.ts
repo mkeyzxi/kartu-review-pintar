@@ -1,37 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ApiResponse } from '@/types/api';
+import { getAdminAuth } from '@/lib/firebase/admin';
 
 /**
  * POST /api/admin/auth/session
  *
- * Sets the admin-token cookie server-side so Next.js middleware
- * can read it on subsequent requests.
+ * Verifies the Firebase ID token from the request body and sets
+ * an HttpOnly cookie with the user's email for middleware to read.
  *
- * Body: { email: string }
+ * Body: { idToken: string, email: string }
  *
- * This is a lightweight session endpoint for the Firestore-only
- * auth flow (no Firebase Admin SDK required). The token stored in
- * the cookie is a base64 of the email — replace with a proper JWT
- * or Firebase session cookie in production.
+ * The ID token is verified server-side using Firebase Admin SDK.
+ * If valid, a base64-encoded email cookie is set for 5 days.
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email } = body as { email?: string };
+    const { idToken, email: clientEmail } = body as { idToken?: string; email?: string };
 
-    if (!email) {
+    if (!idToken || !clientEmail) {
       return NextResponse.json<ApiResponse>(
-        { success: false, error: 'Email diperlukan' },
+        { success: false, error: 'Kredensial tidak lengkap' },
         { status: 400 }
       );
     }
 
-    // The login page has already verified the Firestore credentials,
-    // so we trust the email here and just issue the cookie.
-    const tokenValue = Buffer.from(email.trim()).toString('base64');
+    // Verify the ID token using Firebase Admin SDK
+    let decodedToken;
+    try {
+      const auth = getAdminAuth();
+      decodedToken = await auth.verifyIdToken(idToken);
+      console.log('[session] Token verified successfully for:', decodedToken.email);
+    } catch (verifyError: any) {
+      console.error('[session] ID token verification failed:', {
+        code: verifyError.code,
+        message: verifyError.message,
+        stack: verifyError.stack,
+      });
+      
+      // Provide more specific error messages
+      let errorMessage = 'Token tidak valid atau sudah kedaluwarsa';
+      if (verifyError.code === 'auth/argument-error') {
+        errorMessage = 'Format token tidak valid';
+      } else if (verifyError.code === 'auth/id-token-expired') {
+        errorMessage = 'Token sudah kedaluwarsa. Silakan login ulang.';
+      } else if (verifyError.code === 'auth/insufficient-permission') {
+        errorMessage = 'Izin tidak cukup untuk verifikasi token';
+      }
+      
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: errorMessage, details: verifyError.message },
+        { status: 401 }
+      );
+    }
+
+    // Use the email from the verified token (not client-supplied)
+    const email = decodedToken.email?.toLowerCase().trim();
+    const uid = decodedToken.uid;
+
+    if (!email) {
+      return NextResponse.json<ApiResponse>(
+        { success: false, error: 'Email tidak ditemukan dalam token' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user has admin custom claims
+    const isAdmin = decodedToken.admin === true;
+
+    // Create cookie value with email and admin status
+    const cookiePayload = JSON.stringify({ email, uid, isAdmin });
+    const tokenValue = Buffer.from(cookiePayload).toString('base64');
     const maxAgeSec = 60 * 60 * 24 * 5; // 5 days
 
-    const response = NextResponse.json({ success: true, message: 'Sesi berhasil dibuat' });
+    const response = NextResponse.json({
+      success: true,
+      message: 'Sesi berhasil dibuat',
+      isAdmin,
+    });
 
     response.cookies.set('admin-token', tokenValue, {
       maxAge: maxAgeSec,
@@ -42,10 +88,13 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
-    console.error('Error creating session:', error);
+  } catch (error: any) {
+    console.error('Error creating session:', {
+      message: error.message,
+      stack: error.stack,
+    });
     return NextResponse.json<ApiResponse>(
-      { success: false, error: 'Gagal membuat sesi' },
+      { success: false, error: 'Gagal membuat sesi', details: error.message },
       { status: 500 }
     );
   }

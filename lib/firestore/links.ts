@@ -118,7 +118,8 @@ export async function getLinks(options: {
 }> {
     const { page = 1, limit: pageSize = 20, search, status } = options;
 
-    const q = query(collection(db, COLLECTION_NAME));
+    // Build query with limit at Firestore level for efficient pagination
+    const q = query(collection(db, COLLECTION_NAME), limit(pageSize));
     const snapshot = await getDocs(q);
 
     let links = snapshot.docs.map((doc) => ({
