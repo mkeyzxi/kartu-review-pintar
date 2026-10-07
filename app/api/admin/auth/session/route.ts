@@ -19,12 +19,22 @@ function getAdminAuth() {
     );
   }
 
+  // Parse private key - handle both literal \n and actual newlines
+  let parsedKey: string;
+  try {
+    // First, try to parse as JSON (in case it's a JSON string)
+    parsedKey = JSON.parse(privateKey);
+  } catch {
+    // If not JSON, replace literal \n with actual newlines
+    parsedKey = privateKey.replace(/\\n/g, '\n');
+  }
+
   if (!getApps().length) {
     initializeApp({
       credential: cert({
         projectId: projectId,
         clientEmail: clientEmail,
-        privateKey: privateKey.replace(/\\n/g, '\n'),
+        privateKey: parsedKey,
       }),
     });
   }

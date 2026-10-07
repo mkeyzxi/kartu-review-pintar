@@ -19,6 +19,16 @@ function getAdminApp(): App {
     );
   }
 
+  // Parse private key - handle both literal \n and actual newlines
+  let parsedKey: string;
+  try {
+    // First, try to parse as JSON (in case it's a JSON string)
+    parsedKey = JSON.parse(privateKey);
+  } catch {
+    // If not JSON, replace literal \n with actual newlines
+    parsedKey = privateKey.replace(/\\n/g, '\n');
+  }
+
   // Only initialize if not already initialized
   if (!getApps().length) {
     try {
@@ -26,7 +36,7 @@ function getAdminApp(): App {
         credential: cert({
           projectId: projectId,
           clientEmail: clientEmail,
-          privateKey: privateKey.replace(/\\n/g, '\n'),
+          privateKey: parsedKey,
         }),
       });
       console.log('[Firebase Admin] Initialized successfully');
