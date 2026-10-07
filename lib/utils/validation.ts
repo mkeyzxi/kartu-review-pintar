@@ -17,8 +17,8 @@ export const activateSchema = z.object({
     .optional(),
   phone_number: z
     .string()
-    .min(1, 'Nomor Telepon wajib diisi.')
-    .max(20, 'Nomor telepon terlalu panjang.'),
+    .nullable()
+    .optional(),
   pin: z
     .string()
     .regex(/^\d{4,6}$/, 'PIN harus berupa angka 4–6 digit.'),

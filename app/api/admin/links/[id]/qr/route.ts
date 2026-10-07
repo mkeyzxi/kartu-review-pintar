@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
-import { getLinkById } from '@/lib/firestore/links';
+import { adminGetLinkById } from '@/lib/firestore/admin-links';
 import QRCode from 'qrcode';
 import { ApiResponse } from '@/types/api';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +18,7 @@ export async function GET(
       return session.error;
     }
     
-    const link = await getLinkById(params.id);
+    const link = await adminGetLinkById(params.id);
     if (!link) {
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Link tidak ditemukan' },

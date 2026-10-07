@@ -4,8 +4,11 @@ import { adminCreateLink, adminGetLinkBySlug } from '@/lib/firestore/admin-links
 import { generateUniqueSlugs } from '@/lib/utils/slug';
 import { generateSchema } from '@/lib/utils/validation';
 import { ApiResponse, GenerateResponse } from '@/types/api';
-import { clearAnalyticsCache } from '@/lib/firestore/scan-logs';
+import { clearAnalyticsCache } from '@/lib/firestore/admin-analytics';
 import { trackError } from '@/lib/utils/error-tracking';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {

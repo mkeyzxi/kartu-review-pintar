@@ -2,15 +2,31 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { getLinks, getLinksCount } from '@/lib/firestore/links';
 import { Link as LinkType } from '@/types/link';
-import { Timestamp } from 'firebase/firestore';
 import { ToastContainer, useToast } from '@/components/ui/Toast';
 import { trackError } from '@/lib/utils/error-tracking';
 
-function toDate(value: string | Timestamp): Date {
+/**
+ * Convert various date formats to Date object.
+ * Handles: string, Firestore Timestamp, plain object with _seconds/_nanoseconds, Date
+ */
+function toDate(value: any): Date {
+  if (!value) return new Date();
+  if (value instanceof Date) return value;
   if (typeof value === 'string') return new Date(value);
-  if (value instanceof Timestamp) return value.toDate();
+  // Firestore Timestamp (server-side) or serialized object (client-side)
+  if (typeof value === 'object') {
+    // Check for Firestore Timestamp instance (has toDate method)
+    if (typeof value.toDate === 'function') return value.toDate();
+    // Check for serialized Timestamp object (_seconds, _nanoseconds)
+    if ('_seconds' in value && '_nanoseconds' in value) {
+      return new Date(value._seconds * 1000 + value._nanoseconds / 1000000);
+    }
+    // Check for seconds/nanoseconds (alternative format)
+    if ('seconds' in value && 'nanoseconds' in value) {
+      return new Date(value.seconds * 1000 + value.nanoseconds / 1000000);
+    }
+  }
   return new Date(value);
 }
 
@@ -222,7 +238,7 @@ export default function DashboardPage() {
           <p className="text-sm text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="btn-google-blue"
+                className="btn-google-blue"
           >
             COBA LAGI
           </button>
@@ -385,7 +401,7 @@ export default function DashboardPage() {
                     <td className="p-2 sm:p-4 align-top">
                       <span className="font-mono bg-gray-200 px-2 py-1 rounded text-xs sm:text-sm font-bold block text-center border border-gray-300">{link.slug}</span>
                       <Link href={`/${link.slug}`} target="_blank" className="text-[10px] sm:text-[11px] text-google-blue font-bold hover:underline mt-2 text-center block mb-2">Test &rarr;</Link>
-                      
+                       
                       <a
                         href={`/api/admin/links/${link.id}/qr`}
                         className="text-[9px] sm:text-[10px] bg-white border border-gray-300 text-gray-700 font-bold py-1 px-2 rounded block text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"

@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminSession } from '@/lib/auth/session';
 import { adminUpdateLink } from '@/lib/firestore/admin-links';
 import { updateExpirySchema } from '@/lib/utils/validation';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import { ApiResponse } from '@/types/api';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(
   request: NextRequest,

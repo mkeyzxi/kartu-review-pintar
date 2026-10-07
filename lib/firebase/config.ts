@@ -11,7 +11,9 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+// Initialize Firebase (client SDK — hanya dipakai di client components seperti login)
+// initializeApp dengan env yang kosong tidak throw saat build, hanya gagal saat dipakai,
+// jadi aman untuk static prerender. Jangan import file ini di server components / API routes.
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

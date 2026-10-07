@@ -1,4 +1,11 @@
-import { Timestamp } from 'firebase/firestore';
+// Using generic Timestamp type to avoid client SDK dependency in shared types
+export type TimestampLike = {
+  toDate?: () => Date;
+  _seconds?: number;
+  _nanoseconds?: number;
+  seconds?: number;
+  nanoseconds?: number;
+} | string | Date | null;
 
 export interface ScanLog {
   id: string;
@@ -10,7 +17,7 @@ export interface ScanLog {
   browser: string | null;
   referrer: string | null;
   status: 'valid' | 'duplicate';
-  createdAt: Timestamp;
+  createdAt: TimestampLike;
 }
 
 export interface CreateScanLogInput {
@@ -49,5 +56,5 @@ export interface RecentScan {
   deviceType: string | null;
   browser: string | null;
   status: string;
-  createdAt: Timestamp;
+  createdAt: TimestampLike;
 }
