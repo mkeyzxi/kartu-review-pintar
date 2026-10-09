@@ -3,6 +3,7 @@ import { adminCreateScanLog, adminIsDuplicateScan } from '@/lib/firestore/admin-
 import { adminGetLinkBySlug } from '@/lib/firestore/admin-links';
 import { parseUserAgent, hashIp } from '@/lib/utils/device';
 import { ApiResponse } from '@/types/api';
+import { clearAnalyticsCache } from '@/lib/firestore/admin-analytics';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -44,6 +45,9 @@ export async function POST(
       referrer: referrer,
       status: isDuplicate ? 'duplicate' : 'valid',
     });
+
+    // Clear analytics cache agar data baru langsung terlihat
+    clearAnalyticsCache();
 
     return NextResponse.json<ApiResponse>({
       success: true,

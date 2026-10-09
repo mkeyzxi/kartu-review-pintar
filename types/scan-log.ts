@@ -58,3 +58,21 @@ export interface RecentScan {
   status: string;
   createdAt: TimestampLike;
 }
+
+export interface LinkAnalyticsData {
+  linkId: string;
+  linkSlug: string;
+  storeName: string | null;
+  totalScans: number;
+  todayScans: number;
+  monthScans: number;
+  chartLabels: string[];
+  chartData: number[];
+  recentScans: RecentScan[];
+  deviceBreakdown: {
+    desktop: number;
+    mobile: number;
+    tablet: number;
+  };
+  browserBreakdown: Record<string, number>;
+}

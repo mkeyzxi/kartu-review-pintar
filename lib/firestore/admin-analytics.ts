@@ -1,5 +1,5 @@
 import { getAdminDb } from "@/lib/firebase/admin";
-import { AnalyticsData, TopCard, RecentScan } from "@/types/scan-log";
+import { AnalyticsData, TopCard, RecentScan, LinkAnalyticsData } from "@/types/scan-log";
 import { Timestamp } from "firebase-admin/firestore";
 
 const COLLECTION_NAME = "scanLogs";
@@ -142,6 +142,7 @@ async function fetchAnalyticsData(options: {
   let allValid: Array<{ id: string; linkId: string; linkSlug: string; createdAt: any; deviceType: any; browser: any; status: any }> = [];
   try {
     const snapshot = await collection.where("status", "==", "valid").get();
+    console.log(`[Analytics] Found ${snapshot.size} valid scan logs`);
     allValid = snapshot.docs.map((doc) => {
       const d: any = doc.data();
       return {
@@ -165,13 +166,18 @@ async function fetchAnalyticsData(options: {
     .map((s) => ({ ...s, _date: toDateSafe(s.createdAt) }))
     .filter((s) => s._date !== null) as Array<(typeof allValid)[number] & { _date: Date }>;
 
+  console.log(`[Analytics] Total valid scans: ${allValid.length}, with dates: ${withDates.length}`);
+  if (allValid.length > 0) {
+    console.log(`[Analytics] Sample scan:`, JSON.stringify(allValid[0], null, 2));
+  }
+
+  console.log(`[Analytics] Total valid scans: ${allValid.length}, with dates: ${withDates.length}`);
+
   // Filter sesuai year/month/day di memory
   const inFilter = (d: Date): boolean => {
     if (year && d.getFullYear() !== year) return false;
-    if (year && month && d.getMonth() + 1 !== month) return false;
-    if (year && month && day && d.getDate() !== day) return false;
-    // Jika user memilih bulan/tanggal tanpa tahun, abaikan filter longgar itu
-    // (UI selalu mengirim year saat month/day dipilih — lihat analytics/page.tsx)
+    if (month && d.getMonth() + 1 !== month) return false;
+    if (day && d.getDate() !== day) return false;
     return true;
   };
   const filtered = withDates.filter((s) => inFilter(s._date));
@@ -322,5 +328,182 @@ async function fetchAnalyticsData(options: {
     chartData,
     topCards,
     recentScans,
+  };
+}
+
+/**
+ * Get analytics data for a specific link/card.
+ */
+export async function adminGetLinkAnalytics(
+  linkId: string,
+  options: {
+    year?: number;
+    month?: number;
+    day?: number;
+  }
+): Promise<LinkAnalyticsData> {
+  const { year, month, day } = options;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  const db = getAdminDb();
+
+  // Get link info
+  const linkDoc = await db.collection("links").doc(linkId).get();
+  if (!linkDoc.exists) {
+    throw new Error("Link tidak ditemukan");
+  }
+  const linkData: any = linkDoc.data() || {};
+
+  // Get all valid scans for this link
+  const snapshot = await db
+    .collection(COLLECTION_NAME)
+    .where("linkId", "==", linkId)
+    .where("status", "==", "valid")
+    .get();
+
+  console.log(`[LinkAnalytics] Found ${snapshot.size} valid scans for link ${linkId}`);
+
+  const scans = snapshot.docs.map((doc) => {
+    const d: any = doc.data();
+    return {
+      id: doc.id,
+      linkId: d.linkId ?? "",
+      linkSlug: d.linkSlug ?? "",
+      createdAt: d.createdAt ?? null,
+      deviceType: d.deviceType ?? null,
+      browser: d.browser ?? null,
+      status: d.status ?? "valid",
+    };
+  });
+
+  const withDates = scans
+    .map((s) => ({ ...s, _date: toDateSafe(s.createdAt) }))
+    .filter((s) => s._date !== null) as Array<(typeof scans)[number] & { _date: Date }>;
+
+  // Filter by year/month/day
+  const inFilter = (d: Date): boolean => {
+    if (year && d.getFullYear() !== year) return false;
+    if (month && d.getMonth() + 1 !== month) return false;
+    if (day && d.getDate() !== day) return false;
+    return true;
+  };
+  const filtered = withDates.filter((s) => inFilter(s._date));
+
+  const totalScans = filtered.length;
+
+  // Today scans
+  const todayStart = new Date(currentYear, currentMonth - 1, now.getDate());
+  const todayEnd = new Date(currentYear, currentMonth - 1, now.getDate() + 1);
+  const todayScans = filtered.filter(
+    (s) => s._date >= todayStart && s._date < todayEnd
+  ).length;
+
+  // Month scans
+  const monthStart = new Date(currentYear, currentMonth - 1, 1);
+  const monthEnd = new Date(currentYear, currentMonth, 1);
+  const monthScans = filtered.filter(
+    (s) => s._date >= monthStart && s._date < monthEnd
+  ).length;
+
+  // Chart data
+  const chartLabels: string[] = [];
+  const chartData: number[] = [];
+
+  if (year && month && day) {
+    // Hourly chart for 1 day
+    for (let i = 0; i < 24; i++) {
+      chartLabels.push(`${i.toString().padStart(2, "0")}:00`);
+      chartData.push(0);
+    }
+    filtered.forEach((s) => {
+      const h = s._date.getHours();
+      if (h >= 0 && h < 24) chartData[h]++;
+    });
+  } else if (year && month) {
+    // Daily chart for 1 month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+      chartLabels.push(i.toString());
+      chartData.push(0);
+    }
+    filtered.forEach((s) => {
+      const dom = s._date.getDate();
+      if (dom >= 1 && dom <= daysInMonth) chartData[dom - 1]++;
+    });
+  } else if (year) {
+    // Monthly chart for 1 year
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    for (let i = 0; i < 12; i++) {
+      chartLabels.push(monthNames[i]);
+      chartData.push(0);
+    }
+    filtered.forEach((s) => {
+      chartData[s._date.getMonth()]++;
+    });
+  } else {
+    // Default: 7 hari terakhir
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      chartLabels.push(date.toLocaleDateString("id-ID", { weekday: "short" }));
+      chartData.push(0);
+    }
+    filtered.forEach((s) => {
+      const diffTime = now.getTime() - s._date.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays < 7) {
+        chartData[6 - diffDays]++;
+      }
+    });
+  }
+
+  // Recent scans
+  const sorted = [...withDates].sort((a, b) => b._date.getTime() - a._date.getTime()).slice(0, 20);
+
+  const recentScans: RecentScan[] = sorted.map((s) => ({
+    id: s.id,
+    linkId: s.linkId,
+    linkSlug: s.linkSlug,
+    storeName: linkData.storeName ?? null,
+    deviceType: s.deviceType ?? null,
+    browser: s.browser ?? null,
+    status: s.status ?? "valid",
+    createdAt: (toISOStringSafe(s.createdAt) ?? s._date.toISOString()) as any,
+  }));
+
+  // Device breakdown
+  const deviceBreakdown = {
+    desktop: 0,
+    mobile: 0,
+    tablet: 0,
+  };
+  filtered.forEach((s) => {
+    if (s.deviceType === "desktop") deviceBreakdown.desktop++;
+    else if (s.deviceType === "mobile") deviceBreakdown.mobile++;
+    else if (s.deviceType === "tablet") deviceBreakdown.tablet++;
+  });
+
+  // Browser breakdown
+  const browserBreakdown: Record<string, number> = {};
+  filtered.forEach((s) => {
+    const browser = s.browser || "Unknown";
+    browserBreakdown[browser] = (browserBreakdown[browser] || 0) + 1;
+  });
+
+  return {
+    linkId,
+    linkSlug: linkData.slug ?? "",
+    storeName: linkData.storeName ?? null,
+    totalScans,
+    todayScans,
+    monthScans,
+    chartLabels,
+    chartData,
+    recentScans,
+    deviceBreakdown,
+    browserBreakdown,
   };
 }

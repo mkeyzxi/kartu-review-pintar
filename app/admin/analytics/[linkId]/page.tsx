@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { AnalyticsData } from '@/types/scan-log';
+import { useParams } from 'next/navigation';
+import { LinkAnalyticsData } from '@/types/scan-log';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,29 +12,22 @@ import {
   Title,
   Tooltip,
   Legend,
+  ArcElement,
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Doughnut } from 'react-chartjs-2';
 import { trackError } from '@/lib/utils/error-tracking';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-/**
- * Convert various date formats to Date object.
- * Handles: string, Firestore Timestamp, plain object with _seconds/_nanoseconds, Date
- */
 function toDate(value: any): Date {
   if (!value) return new Date();
   if (value instanceof Date) return value;
   if (typeof value === 'string') return new Date(value);
-  // Firestore Timestamp (server-side) or serialized object (client-side)
   if (typeof value === 'object') {
-    // Check for Firestore Timestamp instance (has toDate method)
     if (typeof value.toDate === 'function') return value.toDate();
-    // Check for serialized Timestamp object (_seconds, _nanoseconds)
     if ('_seconds' in value && '_nanoseconds' in value) {
       return new Date(value._seconds * 1000 + value._nanoseconds / 1000000);
     }
-    // Check for seconds/nanoseconds (alternative format)
     if ('seconds' in value && 'nanoseconds' in value) {
       return new Date(value.seconds * 1000 + value.nanoseconds / 1000000);
     }
@@ -42,28 +35,28 @@ function toDate(value: any): Date {
   return new Date(value);
 }
 
-export default function AnalyticsPage() {
-  const router = useRouter();
-  const [data, setData] = useState<AnalyticsData | null>(null);
+export default function LinkAnalyticsPage() {
+  const params = useParams();
+  const linkId = params.linkId as string;
+
+  const [data, setData] = useState<LinkAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [year, setYear] = useState<string>('');
   const [month, setMonth] = useState<string>('');
   const [day, setDay] = useState<string>('');
   const [retryCount, setRetryCount] = useState(0);
-  const [isExporting, setIsExporting] = useState(false);
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams();
-      if (year) params.append('year', year);
-      if (month) params.append('month', month);
-      if (day) params.append('day', day);
+      const queryParams = new URLSearchParams();
+      if (year) queryParams.append('year', year);
+      if (month) queryParams.append('month', month);
+      if (day) queryParams.append('day', day);
 
-      // Cookie session dikirim browser secara otomatis
-      const response = await fetch(`/api/admin/analytics?${params}`);
+      const response = await fetch(`/api/admin/analytics/${linkId}?${queryParams.toString()}`);
       const result = await response.json();
 
       if (result.success) {
@@ -73,11 +66,11 @@ export default function AnalyticsPage() {
       }
     } catch (err) {
       setError('Terjadi kesalahan jaringan');
-      trackError(err as Error, { context: 'fetch_analytics' });
+      trackError(err as Error, { context: 'fetch_link_analytics', metadata: { linkId } });
     } finally {
       setLoading(false);
     }
-  }, [year, month, day]);
+  }, [linkId, year, month, day]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -124,6 +117,55 @@ export default function AnalyticsPage() {
     },
   };
 
+  const deviceData = {
+    labels: ['Desktop', 'Mobile', 'Tablet'],
+    datasets: [
+      {
+        data: [
+          data?.deviceBreakdown.desktop || 0,
+          data?.deviceBreakdown.mobile || 0,
+          data?.deviceBreakdown.tablet || 0,
+        ],
+        backgroundColor: ['#4285F4', '#34A853', '#FBBC05'],
+        borderColor: '#111827',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const deviceOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+    },
+  };
+
+  const browserLabels = Object.keys(data?.browserBreakdown || {});
+  const browserData = {
+    labels: browserLabels,
+    datasets: [
+      {
+        data: browserLabels.map((b) => data?.browserBreakdown[b] || 0),
+        backgroundColor: ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#9C27B0', '#FF9800'],
+        borderColor: '#111827',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const browserOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+    },
+  };
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -145,12 +187,12 @@ export default function AnalyticsPage() {
             >
               COBA LAGI {retryCount > 0 && `(${retryCount})`}
             </button>
-            <button
-              onClick={() => window.location.reload()}
+            <Link
+              href="/admin/analytics"
               className="bg-gray-200 hover:bg-gray-300 text-google-text font-bold px-4 py-2 rounded-lg border-2 border-gray-400 transition-all text-sm"
             >
-              RELOAD HALAMAN
-            </button>
+              KEMBALI KE ANALYTICS
+            </Link>
           </div>
         </div>
       </div>
@@ -161,12 +203,16 @@ export default function AnalyticsPage() {
     <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 animate-fade-up" style={{ animationDelay: '0.1s' }}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-3 sm:gap-4">
         <div className="w-full sm:w-auto">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold-display text-google-text">ANALYTICS</h1>
-          <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">Ringkasan penggunaan kartu dan traffic redirect.</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold-display text-google-text">
+            ANALYTICS KARTU
+          </h1>
+          <p className="text-sm sm:text-base text-gray-500 font-medium mt-1">
+            {data?.storeName || 'Tanpa Label'} &mdash; <span className="font-mono">{data?.linkSlug}</span>
+          </p>
         </div>
         <div className="flex gap-2 sm:gap-4 w-full sm:w-auto">
           <Link
-            href="/admin/dashboard"
+            href="/admin/analytics"
             className="flex-1 sm:flex-initial bg-gray-200 hover:bg-gray-300 text-google-text font-bold-display px-3 sm:px-4 py-2 rounded-lg border-2 border-google-text shadow-[4px_4px_0px_rgba(17,24,39,0.1)] transition-all text-sm sm:text-base text-center"
           >
             KEMBALI
@@ -178,15 +224,21 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div className="card-solid p-4 sm:p-6 flex flex-col border-google-blue shadow-[4px_4px_0px_#4285F4] sm:shadow-[8px_8px_0px_#4285F4]">
           <span className="text-xs sm:text-sm text-google-blue font-bold mb-1 sm:mb-2">TOTAL SCAN</span>
-          <span className="text-3xl sm:text-4xl lg:text-5xl font-bold-display text-google-text">{(data?.totalScans || 0).toLocaleString('id-ID')}</span>
+          <span className="text-3xl sm:text-4xl lg:text-5xl font-bold-display text-google-text">
+            {(data?.totalScans || 0).toLocaleString('id-ID')}
+          </span>
         </div>
         <div className="card-solid p-4 sm:p-6 flex flex-col border-google-green shadow-[4px_4px_0px_#34A853] sm:shadow-[8px_8px_0px_#34A853]">
           <span className="text-xs sm:text-sm text-google-green font-bold mb-1 sm:mb-2">HARI INI</span>
-          <span className="text-3xl sm:text-4xl lg:text-5xl font-bold-display text-google-text">{(data?.todayScans || 0).toLocaleString('id-ID')}</span>
+          <span className="text-3xl sm:text-4xl lg:text-5xl font-bold-display text-google-text">
+            {(data?.todayScans || 0).toLocaleString('id-ID')}
+          </span>
         </div>
         <div className="card-solid p-4 sm:p-6 flex flex-col border-google-yellow shadow-[4px_4px_0px_#FBBC05] sm:shadow-[8px_8px_0px_#FBBC05]">
           <span className="text-xs sm:text-sm text-google-yellow font-bold mb-1 sm:mb-2">BULAN INI</span>
-          <span className="text-3xl sm:text-4xl lg:text-5xl font-bold-display text-google-text">{(data?.monthScans || 0).toLocaleString('id-ID')}</span>
+          <span className="text-3xl sm:text-4xl lg:text-5xl font-bold-display text-google-text">
+            {(data?.monthScans || 0).toLocaleString('id-ID')}
+          </span>
         </div>
       </div>
 
@@ -251,37 +303,6 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Export Section */}
-      <div className="card-solid p-4 sm:p-6 bg-white mb-6 sm:mb-8">
-        <h2 className="text-lg sm:text-xl font-bold-display text-google-text mb-3 sm:mb-4">EKSPOR DATA</h2>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <button
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (year) params.append('year', year);
-              if (month) params.append('month', month);
-              if (day) params.append('day', day);
-              window.open(`/api/admin/analytics?export=excel&${params.toString()}`, '_blank');
-            }}
-            className="bg-google-blue text-white font-bold px-4 sm:px-6 py-2 sm:py-[14px] rounded-lg border-2 border-google-blue shadow-[4px_4px_0px_rgba(66,133,244,0.3)] transition-all text-sm sm:text-base flex items-center justify-center"
-          >
-            Export ke Excel
-          </button>
-          <button
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (year) params.append('year', year);
-              if (month) params.append('month', month);
-              if (day) params.append('day', day);
-              window.open(`/api/admin/analytics?export=excel&${params.toString()}`, '_blank');
-            }}
-            className="bg-gray-200 hover:bg-gray-300 text-google-text font-bold px-4 sm:px-6 py-2 sm:py-[14px] rounded-lg border-2 border-gray-400 transition-all text-sm sm:text-base flex items-center justify-center"
-          >
-            Export Semua Riwayat Scan
-          </button>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
         {/* Grafik Penggunaan */}
         <div className="card-solid p-4 sm:p-6 bg-white">
@@ -297,46 +318,55 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Statistik Kartu */}
+        {/* Device Breakdown */}
         <div className="card-solid p-4 sm:p-6 bg-white">
-          <h2 className="text-lg sm:text-xl font-bold-display text-google-text mb-4 sm:mb-6">KARTU TERAKTIF</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="pb-2 sm:pb-3 text-xs sm:text-sm font-bold text-gray-500">LABEL / LOKASI</th>
-                  <th className="pb-2 sm:pb-3 text-xs sm:text-sm font-bold text-gray-500">KODE</th>
-                  <th className="pb-2 sm:pb-3 text-xs sm:text-sm font-bold text-gray-500 text-right">SCAN</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.topCards.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="py-4 text-center text-gray-500 text-xs sm:text-sm">Belum ada data scan.</td>
-                  </tr>
-                ) : (
-                  data?.topCards.map((card) => (
-                    <tr
-                      key={card.linkId}
-                      className="border-b border-gray-100 last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => router.push(`/admin/analytics/${card.linkId}`)}
-                    >
-                      <td className="py-2 sm:py-3 font-bold text-google-text text-xs sm:text-sm">
-                        {card.storeName || 'Tanpa Label'}
-                      </td>
-                      <td className="py-2 sm:py-3">
-                        <span className="font-mono bg-gray-100 px-2 py-1 rounded text-[10px] sm:text-xs border border-gray-300">
-                          {card.linkSlug}
-                        </span>
-                      </td>
-                      <td className="py-2 sm:py-3 text-right font-bold-display text-google-blue text-xs sm:text-sm">
-                        {card.totalScan.toLocaleString('id-ID')}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <h2 className="text-lg sm:text-xl font-bold-display text-google-text mb-4 sm:mb-6">DEVICE BREAKDOWN</h2>
+          <div className="relative h-48 sm:h-64 w-full">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-google-blue"></div>
+              </div>
+            ) : (
+              <Doughnut data={deviceData} options={deviceOptions} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
+        {/* Browser Breakdown */}
+        <div className="card-solid p-4 sm:p-6 bg-white">
+          <h2 className="text-lg sm:text-xl font-bold-display text-google-text mb-4 sm:mb-6">BROWSER BREAKDOWN</h2>
+          <div className="relative h-48 sm:h-64 w-full">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-google-blue"></div>
+              </div>
+            ) : (
+              <Doughnut data={browserData} options={browserOptions} />
+            )}
+          </div>
+        </div>
+
+        {/* Export Section */}
+        <div className="card-solid p-4 sm:p-6 bg-white">
+          <h2 className="text-lg sm:text-xl font-bold-display text-google-text mb-4 sm:mb-6">EKSPOR DATA KARTU INI</h2>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (year) params.append('year', year);
+                if (month) params.append('month', month);
+                if (day) params.append('day', day);
+                window.open(`/api/admin/analytics/${linkId}?export=excel&${params.toString()}`, '_blank');
+              }}
+              className="bg-google-blue text-white font-bold px-4 sm:px-6 py-2 sm:py-[14px] rounded-lg border-2 border-google-blue shadow-[4px_4px_0px_rgba(66,133,244,0.3)] transition-all text-sm sm:text-base flex items-center justify-center"
+            >
+              Export ke Excel
+            </button>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Export data scan kartu ini ke file Excel (.xlsx)
+            </p>
           </div>
         </div>
       </div>
@@ -349,7 +379,6 @@ export default function AnalyticsPage() {
             <thead>
               <tr className="border-b-2 border-gray-200 bg-gray-50">
                 <th className="p-2 sm:p-3 text-xs sm:text-sm font-bold text-gray-500">WAKTU</th>
-                <th className="p-2 sm:p-3 text-xs sm:text-sm font-bold text-gray-500">KARTU</th>
                 <th className="p-2 sm:p-3 text-xs sm:text-sm font-bold text-gray-500">DEVICE & BROWSER</th>
                 <th className="p-2 sm:p-3 text-xs sm:text-sm font-bold text-gray-500">STATUS</th>
               </tr>
@@ -357,7 +386,9 @@ export default function AnalyticsPage() {
             <tbody>
               {data?.recentScans.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-4 sm:p-6 text-center text-gray-500 font-bold text-xs sm:text-sm">Belum ada aktivitas.</td>
+                  <td colSpan={3} className="p-4 sm:p-6 text-center text-gray-500 font-bold text-xs sm:text-sm">
+                    Belum ada aktivitas.
+                  </td>
                 </tr>
               ) : (
                 data?.recentScans.map((scan) => (
@@ -372,10 +403,6 @@ export default function AnalyticsPage() {
                       }).replace(/\//g, '/')}
                     </td>
                     <td className="p-2 sm:p-3">
-                      <div className="font-bold text-xs sm:text-sm">{scan.storeName || 'Tanpa Label'}</div>
-                      <div className="font-mono text-[10px] sm:text-xs text-gray-500">{scan.linkSlug}</div>
-                    </td>
-                    <td className="p-2 sm:p-3">
                       <div className="text-xs sm:text-sm">
                         <span className="font-bold capitalize">{scan.deviceType || 'Unknown'}</span>
                         {' - '}
@@ -384,9 +411,13 @@ export default function AnalyticsPage() {
                     </td>
                     <td className="p-2 sm:p-3">
                       {scan.status === 'valid' ? (
-                        <span className="inline-block bg-google-green/20 text-google-green font-bold px-2 py-1 rounded text-[9px] sm:text-[10px] border border-google-green">VALID</span>
+                        <span className="inline-block bg-google-green/20 text-google-green font-bold px-2 py-1 rounded text-[9px] sm:text-[10px] border border-google-green">
+                          VALID
+                        </span>
                       ) : (
-                        <span className="inline-block bg-google-yellow/20 text-google-yellow font-bold px-2 py-1 rounded text-[9px] sm:text-[10px] border border-google-yellow">{scan.status.toUpperCase()}</span>
+                        <span className="inline-block bg-google-yellow/20 text-google-yellow font-bold px-2 py-1 rounded text-[9px] sm:text-[10px] border border-google-yellow">
+                          {scan.status.toUpperCase()}
+                        </span>
                       )}
                     </td>
                   </tr>

@@ -1,5 +1,9 @@
 import { adminGetLinkBySlug } from '@/lib/firestore/admin-links';
 import { notFound, redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { adminCreateScanLog, adminIsDuplicateScan } from '@/lib/firestore/admin-scan-logs';
+import { parseUserAgent, hashIp } from '@/lib/utils/device';
+import { clearAnalyticsCache } from '@/lib/firestore/admin-analytics';
 import ActivationForm from './ActivationForm';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
@@ -127,6 +131,41 @@ async function LinkData({ slug }: { slug: string }) {
     );
   }
   
+  // Log scan untuk analytics
+  try {
+    const headersList = headers();
+    const userAgent = headersList.get('user-agent') || '';
+    const referrer = headersList.get('referer') || '';
+    const ip = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
+
+    const deviceInfo = parseUserAgent(userAgent);
+    const ipHash = hashIp(ip);
+    
+    // Cek duplikat dalam 10 detik terakhir
+    let isDuplicate = false;
+    try {
+      isDuplicate = await adminIsDuplicateScan(link.id, ipHash);
+    } catch (e) {
+      console.warn('Gagal mengecek duplikat (mungkin index belum dibuat), lanjut mencatat log.', e);
+    }
+
+    await adminCreateScanLog({
+      linkId: link.id,
+      linkSlug: link.slug,
+      ipHash: ipHash,
+      userAgent: userAgent,
+      deviceType: deviceInfo.deviceType,
+      browser: deviceInfo.browser,
+      referrer: referrer,
+      status: isDuplicate ? 'duplicate' : 'valid',
+    });
+
+    // Clear analytics cache agar data baru langsung terlihat
+    clearAnalyticsCache();
+  } catch (error) {
+    console.error('Error logging scan:', error);
+  }
+
   // If already claimed, redirect to GMB
   if (link.isClaimed && link.urlGmb) {
     redirect(link.urlGmb);
